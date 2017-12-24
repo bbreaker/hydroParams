@@ -1,3 +1,5 @@
+# started Dec 23, 2017 for package development
+
 recessK <- function(flow, baseQ, dates) {
   
   library(dplyr, quietly = TRUE)
