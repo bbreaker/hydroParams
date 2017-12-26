@@ -37,6 +37,8 @@ recessKuv <- function(flow, dates) {
       
       chunk$slope <- c(NA, diff(chunk$Flow_Inst) / diff(as.numeric(chunk$dateTime)))
       
+      round(((breakpoints(chunk$slope ~ 1)[[1]][1] + breakpoints(chunk$slope ~ 1)[[1]][2]) / 2), 0)
+      
       chunk <- testDF[(chunk[2, 3]):(chunk[nrow(chunk), 3]), ]
       
       chunk$baseQ <- dplyr::if_else(chunk$baseQ == 0, 0.0001, chunk$baseQ)
