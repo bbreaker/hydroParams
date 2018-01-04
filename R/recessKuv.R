@@ -10,7 +10,19 @@ recessKuv <- function(flow, dates) {
     
     testDF <- data.frame(dates = dates, flow = flow)
     
-    testDF$diffQ <- testDF$flow - testDF$baseQ
+    testDF$numDate <- c(NA, cumsum(diff(as.numeric(testDF$dates)) / 15))
+    
+    testDF$diffQ <- c(NA, diff(testDF$flow))
+    
+    testDF$slope <- c(NA, diff(testDF$flow) / diff(as.numeric(testDF$dates)))
+    
+    testDF$absSlope <- abs(testDF$slope)
+    
+    gamMod <- gamlss(log10(absSlope) ~ pb(numDate, df = 15), sigma.fo = ~pb(numDate, df = 15), 
+                     nu.fo = ~15, data = na.omit(testDF), 
+                     family=GG(mu.link = "log", 
+                               sigma.link = "log", 
+                               nu.link = "identity"))
     
     testDF$diffLog <- dplyr::if_else(testDF$diffQ < 0, "fall", "rise")
     
