@@ -1,6 +1,7 @@
 recessKuv <- function(flow, dates) {
   
   library(dplyr, quietly = TRUE)
+  library(gamlss, quietly = TRUE)
   
   if (any(is.na(flow))) {
     
@@ -14,17 +15,25 @@ recessKuv <- function(flow, dates) {
     
     testDF$diffQ <- c(NA, diff(testDF$flow))
     
-    testDF$slope <- c(NA, diff(testDF$flow) / diff(as.numeric(testDF$dates)))
+    testDF$slope <- c(NA, diff(testDF$flow) / diff(testDF$numDate))
     
     testDF$absSlope <- abs(testDF$slope)
     
-    gamMod <- gamlss(log10(absSlope) ~ pb(numDate, df = 15), sigma.fo = ~pb(numDate, df = 15), 
-                     nu.fo = ~15, data = na.omit(testDF), 
-                     family=GG(mu.link = "log", 
-                               sigma.link = "log", 
-                               nu.link = "identity"))
+    gamMod <- gamlss(absSlope ~ pb(numDate, df = 1), sigma.fo = ~pb(numDate, df = 1), 
+                     nu.fo = ~1, data = na.omit(testDF), 
+                     family = ZAGA(mu.link = "log", 
+                                   sigma.link = "log", 
+                                   nu.link = "logit"))
     
-    testDF$diffLog <- dplyr::if_else(testDF$diffQ < 0, "fall", "rise")
+    muP <- predict(gamMod, what = "mu", data = testDF)
+    
+    sigP <- predict(gamMod, what = "sigma", data = testDF)
+    
+    nuP <- predict(gamMod, what = "nu", data = testDF)
+    
+    slpThrshld <- qGG(0.0001, mu=exp(mean(muP)), sigma=mean(sigP), nu=mean(nuP))
+    
+    testDF$diffLog <- dplyr::if_else(testDF$absSlope < slpThrshld, "base", "event")
     
     testRle <- data.frame(lengths = rle(testDF$diffLog)$lengths,
                           vals = rle(testDF$diffLog)$values)
