@@ -1,6 +1,13 @@
-recessKuv <- function(flow, dates) {
+moveAve <- function(series, numDays) {
+  
+  stats::filter(series,rep(1/numDays,numDays), sides=2)
+  
+}
+
+recessKuv <- function(flow, dates, nDays) {
   
   library(dplyr, quietly = TRUE)
+  library(mgcv, quietly = TRUE)
   library(gamlss, quietly = TRUE)
   
   if (any(is.na(flow))) {
@@ -11,27 +18,44 @@ recessKuv <- function(flow, dates) {
     
     testDF <- data.frame(dates = dates, flow = flow)
     
-    testDF$numDate <- c(NA, cumsum(diff(as.numeric(testDF$dates)) / 15))
+    testDFnon <- na.omit(testDF)
     
-    testDF$diffQ <- c(NA, diff(testDF$flow))
+    nDayVal <- testDF %>% 
+      group_by(dayT = as.Date(testDF$dates)) %>%
+      summarize(lDayT = length(dayT)) %>% 
+      summarize(totDay = round(max(lDayT) * nDays, 0)) %>% 
+      unlist(c())
     
-    testDF$slope <- c(NA, diff(testDF$flow) / diff(testDF$numDate))
+    testDF$numDate <- as.numeric(testDF$dates)
+    
+    #testGAM <- gam(log10(flow) ~ s(numDate, k = as.numeric(nDays / 2)), data = testDF)
+    #
+    #testDF$smooth <- as.numeric(10^predict(testGAM, testDF))
+    
+    testDF$aveMove <- as.numeric(moveAve(testDF$flow, nDayVal))
+    
+    testDF$diffAve <- c(NA, diff(testDF$aveMove))
+    
+    testDF$slope <- c(NA, diff(testDF$aveMove) / diff(testDF$numDate))
     
     testDF$absSlope <- abs(testDF$slope)
     
-    gamMod <- gamlss(absSlope ~ pb(numDate, df = 1), sigma.fo = ~pb(numDate, df = 1), 
-                     nu.fo = ~1, data = na.omit(testDF), 
-                     family = ZAGA(mu.link = "log", 
-                                   sigma.link = "log", 
-                                   nu.link = "logit"))
+    testDF$qual <- if_else(testDF$slope > 0, "rise", 
+                           if_else(testDF$slope == 0, "flat", "fall"))
     
-    muP <- predict(gamMod, what = "mu", data = testDF)
+    gamMod <- gamlss(slope ~ pb(numDate, df = 1), data = testDFnon, 
+                     family = LO(mu.link = "identity", sigma.link = "log"))
     
-    sigP <- predict(gamMod, what = "sigma", data = testDF)
+    testDFnon$muP <- predict(gamMod, what = "mu", data = testDFnon)
     
-    nuP <- predict(gamMod, what = "nu", data = testDF)
+    testDFnon$sigP <- exp(predict(gamMod, what = "sigma", data = testDFnon))
     
-    slpThrshld <- qGG(0.0001, mu=exp(mean(muP)), sigma=mean(sigP), nu=mean(nuP))
+    #testDFnon$nuP <- predict(gamMod, what = "nu", data = testDFnon)
+    
+    slpThrshld <- qLO(0.1, mu=mean(testDFnon$muP), 
+                      sigma=mean(testDFnon$sigP))
+    
+    ################ updates to here ##############################################
     
     testDF$diffLog <- dplyr::if_else(testDF$absSlope < slpThrshld, "base", "event")
     
