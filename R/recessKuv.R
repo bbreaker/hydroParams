@@ -18,8 +18,6 @@ recessKuv <- function(flow, dates, nDays) {
     
     testDF <- data.frame(dates = dates, flow = flow)
     
-    testDFnon <- na.omit(testDF)
-    
     nDayVal <- testDF %>% 
       group_by(dayT = as.Date(testDF$dates)) %>%
       summarize(lDayT = length(dayT)) %>% 
@@ -43,7 +41,9 @@ recessKuv <- function(flow, dates, nDays) {
     testDF$qual <- if_else(testDF$slope > 0, "rise", 
                            if_else(testDF$slope == 0, "flat", "fall"))
     
-    gamMod <- gamlss(slope ~ pb(numDate, df = 1), data = testDFnon, 
+    testDFnon <- na.omit(testDF)
+    
+    gamMod <- gamlss(slope ~ pb(numDate, df = 1), data = na.omit(testDF), 
                      family = LO(mu.link = "identity", sigma.link = "log"))
     
     testDFnon$muP <- predict(gamMod, what = "mu", data = testDFnon)
@@ -52,8 +52,15 @@ recessKuv <- function(flow, dates, nDays) {
     
     #testDFnon$nuP <- predict(gamMod, what = "nu", data = testDFnon)
     
-    slpThrshld <- qLO(0.1, mu=mean(testDFnon$muP), 
-                      sigma=mean(testDFnon$sigP))
+    testDFnon <- testDFnon %>% 
+      mutate(mnth = format(dates, "%m")) %>% 
+      group_by_at(vars(mnth)) %>% 
+      mutate(slpThrshldHgh = qLO(0.55, mu = mean(muP), sigma = mean(sigP))) %>% 
+      mutate(slpThrshldLow = qLO(0.45, mu = mean(muP), sigma = mean(sigP)))
+    
+    slpThrshldHgh <- qLO(0.55, mu=mean(testDFnon$muP), sigma=mean(testDFnon$sigP))
+    
+    slpThrshldLow <- qLO(0.45, mu=mean(testDFnon$muP), sigma=mean(testDFnon$sigP))
     
     ################ updates to here ##############################################
     
