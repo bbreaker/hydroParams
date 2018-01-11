@@ -7,7 +7,7 @@ ndays <- function(dates) {
   } else if (any(testType == "Date")) {
     testDFnDays <- length(unique(testDF$dates))
   } else {
-    stop("Please use date objects of class 'Date' or 'POSIXt'")
+    stop("Please use objects of class 'Date' or 'POSIXt'")
   }
   return(testDFnDays)
 }
