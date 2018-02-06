@@ -9,12 +9,15 @@ recessKuv <- function(flow, dates, nDays) {
   library(dplyr, quietly = TRUE)
   library(mgcv, quietly = TRUE)
   library(gamlss, quietly = TRUE)
+  library(zoo, quietly = TRUE)
   
   if (any(is.na(flow))) {
     
     retVal <- NA
     
   } else {
+    
+    #nDays <- 0.05
     
     testDF <- data.frame(dates = dates, flow = flow)
     
@@ -25,42 +28,73 @@ recessKuv <- function(flow, dates, nDays) {
       dplyr::summarize(totDay = round(max(lDayT) * nDays, 0)) %>% 
       unlist(c())
     
-    testDF$numDate <- as.numeric(testDF$dates)
-    
+    #testDF$numDate <- as.numeric(testDF$dates)
+    #
     #testGAM <- gam(log10(flow) ~ s(numDate, k = as.numeric(nDays / 2)), data = testDF)
     #
     #testDF$smooth <- as.numeric(10^predict(testGAM, testDF))
+    #
+    #testDF$aveMove <- as.numeric(moveAve(testDF$flow, nDayVal))
+    #
+    #testDF$diffAve <- c(NA, diff(testDF$aveMove))
+    #
+    #testDF$slope <- c(NA, diff(testDF$aveMove) / diff(testDF$numDate))
+    #
+    #testDF$absSlope <- abs(testDF$slope)
+    #
+    #testDF$qual <- if_else(testDF$slope > 0, "rise", 
+    #                       if_else(testDF$slope == 0, "flat", "fall"))
     
-    testDF$aveMove <- as.numeric(moveAve(testDF$flow, nDayVal))
+    testDF <- testDF %>% 
+      dplyr::mutate(numDate = as.numeric(dates)) %>%  
+      dplyr::mutate(aveMove = as.numeric(moveAve(testDF$flow, nDayVal))) %>%  
+      dplyr::mutate(diffAve = c(NA, diff(aveMove))) %>%   
+      dplyr::mutate(slopeAve = c(NA, diff(aveMove) / diff(numDate))) %>%  
+      dplyr::mutate(slope = c(NA, diff(flow) / diff(numDate))) %>%  
+      dplyr::mutate(absSlope = abs(slope)) %>%   
+      dplyr::mutate(qual = if_else(slopeAve > 0, "rise", 
+                                   if_else(slopeAve == 0, "flat", "fall"))) %>% 
+      dplyr::filter(!is.na(qual)) %>% 
+      dplyr::mutate(cumVal = 1:n()) %>% 
+      data.frame()
     
-    testDF$diffAve <- c(NA, diff(testDF$aveMove))
+    testRle <- data.frame(lengths = rle(testDF$qual)$lengths,
+                          vals = rle(testDF$qual)$values,
+                          stringsAsFactors = FALSE)
     
-    testDF$slope <- c(NA, diff(testDF$aveMove) / diff(testDF$numDate))
+    testRle <- testRle %>% 
+      dplyr::mutate(cumVal = cumsum(testRle$lengths)) %>% 
+      dplyr::mutate(event = if_else(vals == "rise" & lead(vals) == "fall", 1, 0)) %>% 
+      dplyr::mutate(eventNum = cumsum(event)) %>% 
+      dplyr::select(cumVal, eventNum) %>% 
+      data.frame()
     
-    testDF$absSlope <- abs(testDF$slope)
+    #testDF <- testDF %>% 
+    #  dplyr::left_join(testRle, "cumVal") %>% 
+    #  na.locf(eventNum, fromLast = TRUE)
     
-    testDF$qual <- if_else(testDF$slope > 0, "rise", 
-                           if_else(testDF$slope == 0, "flat", "fall"))
+    testDF <- dplyr::left_join(testDF, testRle, "cumVal")
     
-    testDFnon <- na.omit(testDF)
-    
+    testDF$eventNum <- na.locf(testDF$eventNum, fromLast = TRUE)
     
     #gamMod <- gamlss(slope ~ pb(numDate, df = 1), data = na.omit(testDF), 
                      #family = LO(mu.link = "identity", sigma.link = "log"))
     
-    testDFnon <- dplyr::mutate(testDFnon, dayVal = format(dates, "%Y-%m-%d"))
+    #testDFnon <- dplyr::mutate(testDFnon, dayVal = format(dates, "%Y-%m-%d"))
     
-    testDates <- unique(testDFnon$dayVal)
+    testEvents <- unique(testDF$eventNum)
     
-    testVals <- testDFnon[0,]
+    testVals <- data.frame(testDF[0, ], muP = as.numeric(), sigP = as.numeric())
     
-    for (i in 1:length(testDates)) {
+    #i <- 2920
+    
+    for (i in 1:length(testEvents)) {
       
-      testDFsub <- dplyr::filter(testDFnon, dayVal == testDates[i])
+      testDFsub <- dplyr::filter(testDF, eventNum == testEvents[i])
       
       gamMod <- tryCatch({
         
-        gamlss(slope ~ pb(numDate, df = 1), data = testDFsub, 
+        gamlss(slope ~ cs(numDate, df = 3), data = testDFsub, 
                family = LO(mu.link = "identity", sigma.link = "log"))
         
       },
