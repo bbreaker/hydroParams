@@ -56,6 +56,7 @@ agRunData <- function(dssFile, makeList = FALSE) {
       newList[[k]] <- subTSC
     }
     theTSC <- newList
+    names(theTSC) <- listQual
   }
   
   return(theTSC)
