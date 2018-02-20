@@ -15,8 +15,12 @@ agRunData <- function(dssFile, makeList = FALSE) {
     allPaths <- dplyr::bind_rows(allPaths, newVec) 
   }
   
+  tStep <- regmatches(allPaths[1, 4], gregexpr("[[:digit:]]+", allPaths[1, 4]))
+  
+  tStep <- as.numeric(unlist(tStep))
+  
   numInts <- as.numeric((difftime(max(theTSC$datetime), min(theTSC$datetime), 
-                                  units = "mins") / 15) + 1)
+                                  units = "mins") / tStep) + 1)
   
   allPaths$qualDF <- paste(allPaths$feature, allPaths$val, sep = ":")
   
@@ -26,19 +30,34 @@ agRunData <- function(dssFile, makeList = FALSE) {
   
   paramVec <- c()
   
+  theTSC$timeDff <- c(NA, diff(theTSC$datetime))
+  
+  timeRLE <- data.frame(lengths = rle(theTSC$timeDff)[[1]], 
+                        values = rle(theTSC$timeDff)[[2]],
+                        stringsAsFactors = FALSE)
+  
+  timeSum <- timeRLE %>% 
+    dplyr::mutate(indx = rep(1:length(qual), each = 2)) %>% 
+    dplyr::group_by(indx) %>% 
+    dplyr::summarize(nVals = sum(lengths))
+  
   for(j in seq(1, length(qual), 1)) { 
     qualVal <- qual[j] 
     allPathsSub <- dplyr::filter(allPaths, qualDF == qualVal) 
-    if(nrow(allPathsSub) > 1) { 
-      partVec2 <- rep(allPathsSub[1, 1], numInts) 
-      paramVec2 <- rep(allPathsSub[1, 2], numInts)
-    } else { 
-      partVec2 <- rep(allPathsSub[1, 1], numInts - 1)
-      paramVec2 <- rep(allPathsSub[1, 2], numInts - 1)
-    }
+    partVec2 <- rep(allPathsSub[1, 1], timeSum[j, 2])
+    paramVec2 <- rep(allPathsSub[1, 2], timeSum[j, 2])
+    #if(nrow(allPathsSub) > 1) { 
+    #  partVec2 <- rep(allPathsSub[1, 1], numInts) 
+    #  paramVec2 <- rep(allPathsSub[1, 2], numInts)
+    #} else { 
+    #  partVec2 <- rep(allPathsSub[1, 1], numInts - 1)
+    #  paramVec2 <- rep(allPathsSub[1, 2], numInts - 1)
+    #}
     partVec <- c(partVec, partVec2) 
     paramVec <- c(paramVec, paramVec2)
   }
+  
+  theTSC <- dplyr::select(theTSC, -timeDff)
   
   theTSC$feature <- partVec
   
