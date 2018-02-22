@@ -1,10 +1,10 @@
 moveAve <- function(series, numDays) {
   
-  stats::filter(series,rep(1/numDays,numDays), sides=2)
+  stats::filter(series, rep(1 / numDays, numDays), sides = 2)
   
 }
 
-recessKuv <- function(flow, dates, nDays) {
+recessKuv <- function(flow, dates, nDays, drnArea) {
   
   library(dplyr, quietly = TRUE)
   library(mgcv, quietly = TRUE)
@@ -56,7 +56,17 @@ recessKuv <- function(flow, dates, nDays) {
                                    if_else(slopeAve == 0, "flat", "fall"))) %>% 
       dplyr::filter(!is.na(qual)) %>% 
       dplyr::mutate(cumVal = 1:n()) %>% 
+      dplyr::mutate(dateNew = as.Date(dates, "%Y-%m-%d")) %>% 
       data.frame()
+    
+    testDaily <- testDF %>% 
+      dplyr::group_by(dateNew) %>% 
+      dplyr::summarize(dailyQ = mean(flow)) %>% 
+      data.frame()
+
+    testDaily$baseQ <- runPART(testDaily$dailyQ, testDaily$dateNew, drnArea = drnArea)
+    
+    testDF <- dplyr::left_join(testDF, testDaily, "dateNew")
     
     testRle <- data.frame(lengths = rle(testDF$qual)$lengths,
                           vals = rle(testDF$qual)$values,
@@ -65,8 +75,8 @@ recessKuv <- function(flow, dates, nDays) {
     testRle <- testRle %>% 
       dplyr::mutate(cumVal = cumsum(testRle$lengths)) %>% 
       dplyr::mutate(event = if_else(vals == "rise" & lead(vals) == "fall", 1, 0)) %>% 
-      dplyr::mutate(eventNum = cumsum(event)) %>% 
-      dplyr::select(cumVal, eventNum) %>% 
+      dplyr::mutate(eventVal = cumsum(event)) %>% 
+      dplyr::select(cumVal, eventVal) %>% 
       data.frame()
     
     #testDF <- testDF %>% 
@@ -75,14 +85,28 @@ recessKuv <- function(flow, dates, nDays) {
     
     testDF <- dplyr::left_join(testDF, testRle, "cumVal")
     
-    testDF$eventNum <- na.locf(testDF$eventNum, fromLast = TRUE)
+    testDF$eventVal <- na.locf(testDF$eventVal, fromLast = TRUE)
+    
+    testDF <- dplyr::mutate(testDF, modNum = eventVal) 
     
     #gamMod <- gamlss(slope ~ pb(numDate, df = 1), data = na.omit(testDF), 
                      #family = LO(mu.link = "identity", sigma.link = "log"))
     
     #testDFnon <- dplyr::mutate(testDFnon, dayVal = format(dates, "%Y-%m-%d"))
     
-    testEvents <- unique(testDF$eventNum)
+    testEvents <- unique(testDF$eventVal)
+    
+    for (j in 2:length(testEvents)) {
+      testDFSub <- dplyr::filter(testDF, eventVal == j)
+      quan25bq <- quantile(testDFSub)
+      if (nrow(dplyr::filter(testDF, eventVal == j & qual == "rise")) < 
+          (0.5 * nrow(dplyr::filter(testDF, eventVal == j & qual == "fall")))) {
+        testDF[which(testDF$eventVal == j), 15] <- testDF[which(testDF$eventVal == j), 15] + 1
+      } else if (0.5 * nrow(dplyr::filter(testDF, eventVal == j & qual == "rise")) > 
+                 (nrow(dplyr::filter(testDF, eventVal == j & qual == "fall")))) {
+        testDF[which(testDF$eventVal == j), 15] <- testDF[which(testDF$eventVal == j), 15] - 1
+      } 
+    }
     
     testVals <- data.frame(testDF[0, ], muP = as.numeric(), sigP = as.numeric())
     
