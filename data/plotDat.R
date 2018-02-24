@@ -1,12 +1,17 @@
 library(ggplot2)
 library(gridExtra)
+library(plotly)
 
-p1 <- ggplot(testVals, aes(x = dates, y = flow, color = qual)) + 
+p1 <- ggplot(testDF, aes(x = dates, y = flow, color = qual)) + 
   geom_point() + 
-  geom_line(data = testVals, aes(x = dates, y = aveMove), color = "black", size = 1) +
+  #geom_line(data = testDF, aes(x = dates, y = aveMove), color = "black", size = 1) +
+  geom_line(data = testDF, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = baseQ), 
+            color = "red", size = 0.5, linetype = "dashed") +
+  geom_line(data = testDF, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = dailyQ), 
+            color = "green", size = 0.5, linetype = "dashed") +
   #scale_y_log10(minor_breaks = c(-3:10 %o% 10^(-3:10))) +
-  #scale_x_datetime(limits = as.POSIXct(c("2017-01-03 00:00:00", "2017-06-01 00:00:00"), 
-  #                                     origin = "1970-01-01 00:00:00", tz = "UTC")) +
+  scale_x_datetime(limits = as.POSIXct(c("2017-01-03 00:00:00", "2017-06-01 00:00:00"), 
+                                       origin = "1970-01-01 00:00:00", tz = "UTC")) +
   labs(y = "flow") +
   theme_linedraw() +
   theme(legend.position = c(0.99, 0.5),
@@ -58,12 +63,12 @@ p4 <- ggplot(testDF, aes(x = dates, y = flow, color = qual)) +
         legend.title = element_blank(),
         axis.title.x = element_blank())
 
-p5 <- ggplot(testDF, aes(x = dates, y = eventNum)) +
+p5 <- ggplot(testVals, aes(x = dates, y = eventNum)) +
   geom_point() +
   scale_x_datetime(limits = as.POSIXct(c("2017-01-03 00:00:00", "2017-06-01 00:00:00"), 
                                        origin = "1970-01-01 00:00:00", tz = "UTC")) +
-  scale_y_continuous(limits = c(2920, 2930), breaks = seq(2920, 2930, 1)) +
-  labs(y = "eventNum \n \n \n") +
+  #scale_y_continuous(limits = c(2325, 2400), breaks = seq(2325, 2400, 5)) +
+  labs(y = "eventNum \n") +
   theme_linedraw()
 
-grid.arrange(p4, p5, ncol = 1)
+grid.arrange(p1, p5, ncol = 1)
