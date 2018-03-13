@@ -85,6 +85,10 @@ recessKuv <- function(flow, dates, nDays, drnArea) {
     
     testDF <- dplyr::left_join(testDF, testRle, "cumVal")
     
+    if (is.na(testDF[1, 14])) {testDF[1, 14] <- 1}
+    
+    if (is.na(testDF[nrow(testDF), 14])) {testDF[nrow(testDF), 14] <- max(testDF$eventVal, na.rm = TRUE)}
+    
     testDF$eventVal <- na.locf(testDF$eventVal, fromLast = TRUE)
     
     testDF <- dplyr::mutate(testDF, modNum = eventVal) 
@@ -98,11 +102,11 @@ recessKuv <- function(flow, dates, nDays, drnArea) {
     
     for (j in 2:length(testEvents)) {
       testDFSub <- dplyr::filter(testDF, eventVal == j)
-      quan25bq <- quantile(testDFSub)
+      #quan25bq <- quantile(testDFSub)
       if (nrow(dplyr::filter(testDF, eventVal == j & qual == "rise")) < 
-          (0.5 * nrow(dplyr::filter(testDF, eventVal == j & qual == "fall")))) {
+          (0.8 * nrow(dplyr::filter(testDF, eventVal == j & qual == "fall")))) {
         testDF[which(testDF$eventVal == j), 15] <- testDF[which(testDF$eventVal == j), 15] + 1
-      } else if (0.5 * nrow(dplyr::filter(testDF, eventVal == j & qual == "rise")) > 
+      } else if (0.8 * nrow(dplyr::filter(testDF, eventVal == j & qual == "rise")) > 
                  (nrow(dplyr::filter(testDF, eventVal == j & qual == "fall")))) {
         testDF[which(testDF$eventVal == j), 15] <- testDF[which(testDF$eventVal == j), 15] - 1
       } 
