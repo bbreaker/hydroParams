@@ -1,4 +1,4 @@
-waterYEar <- function (x, numeric = FALSE) {
+waterYear <- function (x, numeric = FALSE) {
   x <- as.POSIXlt(x)
   yr <- x$year + 1900L
   mn <- x$mon + 1L
