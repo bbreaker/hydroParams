@@ -1,18 +1,25 @@
 library(ggplot2)
 library(gridExtra)
 library(plotly)
+library(RColorBrewer)
 
-p1 <- ggplot(testDF, aes(x = dates, y = flow, color = qual)) + 
-  geom_point() + 
+Colors <- c(brewer.pal(1237, "Set1"),"green")
+
+testDFPlot <- dplyr::filter(testDF, dates >= as.POSIXct("2017-03-01 00:00:00", tz = "UTC") & 
+                              dates <= as.POSIXct("2017-07-01 00:00:00", tz = "UTC"))
+
+p1 <- ggplot(testDFPlot, aes(x = dates, y = flow, color = as.character(eventVal))) + 
+  geom_line() + 
   #geom_line(data = testDF, aes(x = dates, y = aveMove), color = "black", size = 1) +
-  geom_line(data = testDF, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = baseQ), 
+  geom_line(data = testDFPlot, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = baseQ), 
             color = "red", size = 0.5, linetype = "dashed") +
-  geom_line(data = testDF, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = dailyQ), 
+  geom_line(data = testDFPlot, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = dailyQ), 
             color = "green", size = 0.5, linetype = "dashed") +
   #scale_y_log10(minor_breaks = c(-3:10 %o% 10^(-3:10))) +
-  #scale_x_datetime(limits = as.POSIXct(c("2017-01-03 00:00:00", "2017-06-01 00:00:00"), 
+  #scale_x_datetime(limits = as.POSIXct(c("2017-03-01 00:00:00", "2017-07-01 00:00:00"), 
                                        #origin = "1970-01-01 00:00:00", tz = "UTC")) +
   labs(y = "flow") +
+  scale_fill_manual(values=c(Colors)) + 
   theme_linedraw() +
   theme(legend.position = c(0.99, 0.5),
         legend.background = element_blank(),

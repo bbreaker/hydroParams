@@ -101,71 +101,81 @@ recessKuv <- function(flow, dates, nDays, drnArea) {
     testEvents <- unique(testDF$eventVal)
     
     for (j in 2:length(testEvents)) {
+      
       testDFSub <- dplyr::filter(testDF, eventVal == j)
-      #quan25bq <- quantile(testDFSub)
+      
       if (nrow(dplyr::filter(testDF, eventVal == j & qual == "rise")) < 
-          (0.8 * nrow(dplyr::filter(testDF, eventVal == j & qual == "fall")))) {
+          
+          (0.8 * nrow(dplyr::filter(testDF, eventVal == j & qual == "fall")))) { 
+        
         testDF[which(testDF$eventVal == j), 15] <- testDF[which(testDF$eventVal == j), 15] + 1
+        
       } else if (0.8 * nrow(dplyr::filter(testDF, eventVal == j & qual == "rise")) > 
+                 
                  (nrow(dplyr::filter(testDF, eventVal == j & qual == "fall")))) {
+        
         testDF[which(testDF$eventVal == j), 15] <- testDF[which(testDF$eventVal == j), 15] - 1
+        
       } 
-    }
-    
-    testVals <- data.frame(testDF[0, ], muP = as.numeric(), sigP = as.numeric())
-    
-    #i <- 2920
-    
-    for (i in 1:length(testEvents)) {
-      
-      testDFsub <- dplyr::filter(testDF, eventNum == testEvents[i])
-      
-      gamMod <- tryCatch({
-        
-        gamlss(slope ~ cs(numDate, df = 3), data = testDFsub, 
-               family = LO(mu.link = "identity", sigma.link = "log"))
-        
-      },
-      
-      error = function(cond) {
-        
-        "failure"
-        
-      })
-      
-      if (gamMod == "failure") {
-        
-        testDFsub <- testDFsub %>% 
-          dplyr::mutate(muP = NA)  %>% 
-          dplyr::mutate(sigP = NA) 
-          #dplyr::mutate(slpThrshldHgh = NA) %>%
-          #dplyr::mutate(slpThrshldLow = NA)
-        
-      } else {
-        
-        testDFsub <- testDFsub %>% 
-          dplyr::mutate(muP = predict(gamMod, what = "mu", data = testDFsub))  %>% 
-          dplyr::mutate(sigP = exp(predict(gamMod, what = "sigma", data = testDFsub)))
-          #dplyr::mutate(slpThrshldHgh = qLO(0.55, mu = mean(muP), sigma = mean(sigP))) %>%
-          #dplyr::mutate(slpThrshldLow = qLO(0.45, mu = mean(muP), sigma = mean(sigP)))
-        
-      }
-      
-      testVals <- dplyr::bind_rows(testVals, testDFsub)
       
     }
     
-    testVals$sigP <- if_else(testVals$sigP > quantile(testVals$sigP, probs = 0.99, na.rm = TRUE),
-                             quantile(testVals$sigP, probs = 0.99, na.rm = TRUE), testVals$sigP)
     
-    testVals$muP <- zoo::na.approx(testVals$muP)
     
-    testVals$sigP <- zoo::na.approx(testVals$sigP)
-    
-    testVals <- testVals %>% 
-      dplyr::mutate(slpThrshldHgh = qLO(0.75, mu = muP, sigma = sigP)) %>% 
-      dplyr::mutate(slpThrshldLow = qLO(0.25, mu = muP, sigma = sigP))
-      
+    #testVals <- data.frame(testDF[0, ], muP = as.numeric(), sigP = as.numeric())
+    #
+    ##i <- 2920
+    #
+    #for (i in 1:length(testEvents)) {
+    #  
+    #  testDFsub <- dplyr::filter(testDF, eventNum == testEvents[i])
+    #  
+    #  gamMod <- tryCatch({
+    #    
+    #    gamlss(slope ~ cs(numDate, df = 3), data = testDFsub, 
+    #           family = LO(mu.link = "identity", sigma.link = "log"))
+    #    
+    #  },
+    #  
+    #  error = function(cond) {
+    #    
+    #    "failure"
+    #    
+    #  })
+    #  
+    #  if (gamMod == "failure") {
+    #    
+    #    testDFsub <- testDFsub %>% 
+    #      dplyr::mutate(muP = NA)  %>% 
+    #      dplyr::mutate(sigP = NA) 
+    #      #dplyr::mutate(slpThrshldHgh = NA) %>%
+    #      #dplyr::mutate(slpThrshldLow = NA)
+    #    
+    #  } else {
+    #    
+    #    testDFsub <- testDFsub %>% 
+    #      dplyr::mutate(muP = predict(gamMod, what = "mu", data = testDFsub))  %>% 
+    #      dplyr::mutate(sigP = exp(predict(gamMod, what = "sigma", data = testDFsub)))
+    #      #dplyr::mutate(slpThrshldHgh = qLO(0.55, mu = mean(muP), sigma = mean(sigP))) %>%
+    #      #dplyr::mutate(slpThrshldLow = qLO(0.45, mu = mean(muP), sigma = mean(sigP)))
+    #    
+    #  }
+    #  
+    #  testVals <- dplyr::bind_rows(testVals, testDFsub)
+    #  
+    #}
+    #
+    #testVals$sigP <- if_else(testVals$sigP > quantile(testVals$sigP, probs = 0.99, na.rm = TRUE),
+    #                         quantile(testVals$sigP, probs = 0.99, na.rm = TRUE), testVals$sigP)
+    #
+    #testVals$muP <- zoo::na.approx(testVals$muP)
+    #
+    #testVals$sigP <- zoo::na.approx(testVals$sigP)
+    #
+    #testVals <- testVals %>% 
+    #  dplyr::mutate(slpThrshldHgh = qLO(0.75, mu = muP, sigma = sigP)) %>% 
+    #  dplyr::mutate(slpThrshldLow = qLO(0.25, mu = muP, sigma = sigP))
+    #  
     #testDFnon$muP <- predict(gamMod, what = "mu", data = testDFnon)
     #
     #testDFnon$sigP <- exp(predict(gamMod, what = "sigma", data = testDFnon))
