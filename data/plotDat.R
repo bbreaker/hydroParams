@@ -11,10 +11,10 @@ testDFPlot <- dplyr::filter(testDF, dates >= as.POSIXct("2017-03-01 00:00:00", t
 p1 <- ggplot(testDFPlot, aes(x = dates, y = flow, color = as.character(eventVal))) + 
   geom_line() + 
   #geom_line(data = testDF, aes(x = dates, y = aveMove), color = "black", size = 1) +
-  geom_line(data = testDFPlot, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = baseQ), 
-            color = "red", size = 0.5, linetype = "dashed") +
-  geom_line(data = testDFPlot, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = dailyQ), 
-            color = "green", size = 0.5, linetype = "dashed") +
+  #geom_line(data = testDFPlot, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = baseQ), 
+            #color = "red", size = 0.5, linetype = "dashed") +
+  #geom_line(data = testDFPlot, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = dailyQ), 
+            #color = "green", size = 0.5, linetype = "dashed") +
   #scale_y_log10(minor_breaks = c(-3:10 %o% 10^(-3:10))) +
   #scale_x_datetime(limits = as.POSIXct(c("2017-03-01 00:00:00", "2017-07-01 00:00:00"), 
                                        #origin = "1970-01-01 00:00:00", tz = "UTC")) +
