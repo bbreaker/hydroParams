@@ -3,13 +3,15 @@ library(gridExtra)
 library(plotly)
 library(RColorBrewer)
 
-Colors <- c(brewer.pal(1237, "Set1"),"green")
-
 testDFPlot <- dplyr::filter(testDF, dates >= as.POSIXct("2017-03-01 00:00:00", tz = "UTC") & 
                               dates <= as.POSIXct("2017-07-01 00:00:00", tz = "UTC"))
 
+colors <- grDevices::colors()[grep(c('white'), grDevices::colors(), invert = T)]
+
+testEventVals <- unique(testDFPlot$eventVal)
+
 p1 <- ggplot(testDFPlot, aes(x = dates, y = flow, color = as.character(eventVal))) + 
-  geom_line() + 
+  geom_line(size = 1) + 
   #geom_line(data = testDF, aes(x = dates, y = aveMove), color = "black", size = 1) +
   #geom_line(data = testDFPlot, aes(x = as.POSIXct(dateNew, format = "%Y-%m-%d"), y = baseQ), 
             #color = "red", size = 0.5, linetype = "dashed") +
@@ -19,9 +21,9 @@ p1 <- ggplot(testDFPlot, aes(x = dates, y = flow, color = as.character(eventVal)
   #scale_x_datetime(limits = as.POSIXct(c("2017-03-01 00:00:00", "2017-07-01 00:00:00"), 
                                        #origin = "1970-01-01 00:00:00", tz = "UTC")) +
   labs(y = "flow") +
-  scale_fill_manual(values=c(Colors)) + 
+  scale_color_manual(values = sample(colors, length(testEventVals))) + 
   theme_linedraw() +
-  theme(legend.position = c(0.99, 0.5),
+  theme(legend.position = "right",
         legend.background = element_blank(),
         legend.title = element_blank(),
         axis.title.x = element_blank())
