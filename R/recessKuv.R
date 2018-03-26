@@ -4,7 +4,7 @@ moveAve <- function(series, numDays) {
   
 }
 
-recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.98) {
+recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.995) {
   
   library(dplyr, quietly = TRUE)
   library(zoo, quietly = TRUE)
@@ -83,25 +83,39 @@ recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.98) {
       
       maxFlowDate <- dplyr::filter(chunk, flow == max(chunk$flow, na.rm = TRUE)) [1, 1]
       
-      fallChunk <- dplyr::filter(chunk, dates > maxFlowDate & qual == "fall")
+      fallChunk <- dplyr::filter(chunk, dates > maxFlowDate & qual == "fall" & slope <= 0)
       
       fallChunk$numTime <- as.numeric(fallChunk$dates)
       
-      testLm <- lm(slope ~ numTime, data = fallChunk)
+      testLm <- tryCatch({ 
+        
+        lm(slope ~ numTime, data = fallChunk) 
+        
+        },
+        
+        error = function(cond) {
+          
+          "failure"
+          
+        })
       
       testSeg <- tryCatch({ 
         
-        segmented(testLm)
+        segmented(testLm) 
         
-      },
-      
-      error = function(cond) {
+        }, 
         
-        "failure"
-        
-      })
+        error = function(cond) { 
+          
+          "failure" 
+          
+        })
       
       if (testSeg == "failure") {
+        
+        kVal_ <- NA
+        
+      } else if (var(fallChunk$slope) > 0.01) {
         
         kVal_ <- NA
         
@@ -119,10 +133,11 @@ recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.98) {
     
     }
     
-    kVal <- mean(kVal, na.rm = TRUE)
+    retVal <- list(Recession_Constant = signif(mean(kVal, na.rm = TRUE), 3),
+                   Number_of_Events = length(na.omit(kVal)))
     
   }
   
-  return(kVal)
+  return(retVal)
   
 }
