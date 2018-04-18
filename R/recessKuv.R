@@ -4,7 +4,7 @@ moveAve <- function(series, numDays) {
   
 }
 
-recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.995) {
+recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = FALSE) {
   
   library(dplyr, quietly = TRUE)
   library(zoo, quietly = TRUE)
@@ -73,6 +73,9 @@ recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.995) {
     
     kVal <- as.numeric()
     
+    kDF <- data.frame(dates = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
+                      eventPeak = NA, kVal = NA)
+    
     for (i in seq(1, length(eventNums), 1)) {
       
       chunk <- dplyr::filter(testDFEvents, eventVal == eventNums[i])
@@ -111,30 +114,102 @@ recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.995) {
           
         })
       
+      testLm2 <- tryCatch({ 
+        
+        lm(flow ~ numTime, data = fallChunk) 
+        
+      },
+      
+      error = function(cond) {
+        
+        "failure"
+        
+      })
+      
+      testSeg2 <- tryCatch({ 
+        
+        segmented(testLm2) 
+        
+      }, 
+      
+      error = function(cond) { 
+        
+        "failure" 
+        
+      })
+      
       if (testSeg == "failure") {
-        
-        kVal_ <- NA
-        
-      } else if (var(fallChunk$slope) > 0.01) {
         
         kVal_ <- NA
         
       } else {
         
-        breakDate <- as.POSIXct(summary.segmented(testSeg)$psi[1, 2], origin = "1970-01-01")
+        breakDate <- as.POSIXct(summary.segmented(testSeg)$psi[1, 2], 
+                                origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
+                                tz = attr(testDF$dates, "tzone"))
         
-        baseVec <- fallChunk[which(fallChunk$dates >= breakDate), 2]
+        breakDate2 <- as.POSIXct(summary.segmented(testSeg2)$psi[1, 2], 
+                                 origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
+                                 tz = attr(testDF$dates, "tzone"))
         
-        kVal_ <- signif(baseVec[1] / fallChunk[1, 2], 2)
+        if (abs(difftime(breakDate, breakDate2, units = "mins")) < 15) {
+          
+          #breakDates <- as.POSIXct(min(c(breakDate, breakDate2)), 
+          #                         origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
+          #                         tz = attr(testDF$dates, "tzone"))
+          
+          breakDates <- as.POSIXct(round(as.double(breakDate) / (15*60)) * (15*60), 
+                                   origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
+                                   tz = attr(testDF$dates, "tzone"))
+          
+          baseDF <- fallChunk[which(fallChunk$dates >= breakDates), ]
+          
+          baseDF <- baseDF[1, ]
+          
+        } else {
+          
+          breakDates <- data.frame(dates = as.POSIXct("1970-01-01 00:00:00", 
+                                                      origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
+                                                      tz = attr(testDF$dates, "tzone")))
+          
+          breakDates[2, 1] <- breakDate; breakDates[3, 1] <- breakDate2; breakDates <- breakDates[-1, ]
+          
+          baseDF <- fallChunk[which(fallChunk$dates >= min(breakDates) & fallChunk$dates <= max(breakDates)), ]
+          
+          baseDF <- baseDF[, c(1, 2)] 
+          
+          nRowVal <- round(nrow(baseDF) / 2, 0)
+          
+          baseDF <- baseDF[nRowVal, ]
+          
+        }
+
+        kVal_ <- signif(baseDF$flow / fallChunk[1, 2], 2)
+        
+        kDF_ <- data.frame(dates = baseDF$dates, breakFlow = baseDF$flow, eventPeak = fallChunk[1, 2])
+        
+        kDF_$kVal <- signif(kDF_$breakFlow / kDF_$eventPeak)
 
       }
       
       kVal <- c(kVal, kVal_)
+      
+      kDF <- dplyr::bind_rows(kDF, kDF_)
+      
+      kDF <- kDF[!duplicated(kDF$dates), ]
     
     }
     
-    retVal <- list(Recession_Constant = signif(mean(kVal, na.rm = TRUE), 3),
-                   Number_of_Events = length(na.omit(kVal)))
+    if (getDF == FALSE) {
+      
+      retVal <- list(kVal = signif(mean(kVal, na.rm = TRUE), 3),
+                     nEvents = length(na.omit(kVal)))
+      
+    } else {
+      
+      retVal <- na.omit(kDF)
+      
+    }
     
   }
   
