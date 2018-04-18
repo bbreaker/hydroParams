@@ -180,6 +180,8 @@ recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = FALSE
           
           nRowVal <- round(nrow(baseDF) / 2, 0)
           
+          nRowVal <- ifelse(nRowVal == 0, 1, nRowVal)
+          
           baseDF <- baseDF[nRowVal, ]
           
         }
@@ -197,8 +199,18 @@ recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = FALSE
       kDF <- dplyr::bind_rows(kDF, kDF_)
       
       kDF <- kDF[!duplicated(kDF$dates), ]
-    
+      
     }
+    
+    thresholds <- quantile(kVal, probs = c(0.05, 0.95), na.rm = TRUE)
+    
+    kVal <- kVal[(kVal > thresholds[1]) == TRUE]
+    
+    kVal <- kVal[(kVal < thresholds[2]) == TRUE]
+    
+    kVal <- na.omit(kVal)
+    
+    kDF <- dplyr::filter(kDF, kVal > thresholds[1] & kVal < thresholds[2])
     
     if (getDF == FALSE) {
       
