@@ -142,6 +142,30 @@ recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = FALSE
         
         kVal_ <- NA
         
+        kDF_ <- data.frame(dates = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
+                           eventPeak = NA, kVal = NA)
+        
+      } else if (testSeg2 == "failure") {
+        
+        kVal_ <- NA
+        
+        kDF_ <- data.frame(dates = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
+                           eventPeak = NA, kVal = NA)
+        
+      } else if (testLm == "failure") {
+        
+        kVal_ <- NA
+        
+        kDF_ <- data.frame(dates = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
+                           eventPeak = NA, kVal = NA)
+        
+      } else if (testLm2 == "failure") {
+        
+        kVal_ <- NA
+        
+        kDF_ <- data.frame(dates = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
+                           eventPeak = NA, kVal = NA)
+        
       } else {
         
         breakDate <- as.POSIXct(summary.segmented(testSeg)$psi[1, 2], 
