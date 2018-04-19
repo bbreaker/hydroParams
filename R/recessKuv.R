@@ -4,7 +4,7 @@ moveAve <- function(series, numDays) {
   
 }
 
-recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = FALSE) {
+recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = FALSE, siteID = NULL) {
   
   library(dplyr, quietly = TRUE)
   library(zoo, quietly = TRUE)
@@ -214,12 +214,34 @@ recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = FALSE
     
     if (getDF == FALSE) {
       
-      retVal <- list(kVal = signif(mean(kVal, na.rm = TRUE), 3),
-                     nEvents = length(na.omit(kVal)))
+      if (is.null(siteID)) {
+        
+        retVal <- list(kVal = signif(mean(kVal, na.rm = TRUE), 3),
+                       nEvents = length(na.omit(kVal)))
+        
+      } else {
+        
+        retVal <- list(siteID = siteID,
+                       kVal = signif(mean(kVal, na.rm = TRUE), 3),
+                       nEvents = length(na.omit(kVal)))
+        
+      }
       
     } else {
       
-      retVal <- na.omit(kDF)
+      if (is.null(siteID)) {
+        
+        retVal <- na.omit(kDF)
+        
+      } else {
+        
+        retVal <- na.omit(kDF)
+        
+        retVal$siteID <- siteID
+        
+        retVal <- retVal[, c(5, 1:4)]
+        
+      }
       
     }
     
