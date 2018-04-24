@@ -4,7 +4,7 @@ moveAve <- function(series, numDays) {
   
 }
 
-recessKuv <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = FALSE, siteID = NULL) {
+ratioToPeakUV <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = FALSE, siteID = NULL) {
   
   library(dplyr, quietly = TRUE)
   library(zoo, quietly = TRUE)
