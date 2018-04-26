@@ -1,27 +1,12 @@
-getPeakFlows <- function(siteIds) {
+getPkFlowParams <- function(siteIds) {
   
   library(rvest) 
   library(dplyr)    
   library(stringr)
   
-  stats <- c("2_Year_Peak_Flood",
-             "5_Year_Peak_Flood",
-             "10_Year_Peak_Flood",
-             "25_Year_Peak_Flood",
-             "50_Year_Peak_Flood",
-             "100_Year_Peak_Flood",
-             "500_Year_Peak_Flood", 
-             "Regression_2_Year_Peak_Flood",		
-             "Regression_5_Year_Peak_Flood",		
-             "Regression_10_Year_Peak_Flood",	
-             "Regression_50_Year_Peak_Flood",	
-             "Regression_100_Year_Peak_Flood",	
-             "Regression_500_Year_Peak_Flood",	
-             "Weighted_5_Year_Peak_Flood",			
-             "Weighted_10_Year_Peak_Flood",		
-             "Weighted_50_Year_Peak_Flood",		
-             "Weighted_100_Year_Peak_Flood",		
-             "Weighted_500_Year_Peak_Flood")
+  stats <- c("EMA_Mean_of_Logs_of_Annual_Peaks",
+             "EMA_Std_Dev_of_Logs_of_Annual_Peaks",
+             "EMA_Skew_of_Logs_of_Annual_Peaks")
   
   results <- data.frame(site_no = as.character(),
                         stats = as.character(),
@@ -42,7 +27,7 @@ getPeakFlows <- function(siteIds) {
         html_table() %>%
         as.data.frame(),
       error = function(e){"failure"}
-      )
+    )
     
     if(hold == "failure") {
       
