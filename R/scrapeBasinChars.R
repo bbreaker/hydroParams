@@ -38,7 +38,7 @@ scrapeBasinChars <- function(siteIds) {
       
     } else {
       
-      hold <- hold[-c(1:5), c(1:3)]
+      hold <- hold[-c(1:3, 4), c(1:3)]
       statHdrs <- if_else(hold$X1 == hold$X2, hold$X1, "notAHdr")
       statHdrs <- statHdrs[!grepl("notAHdr", statHdrs)]
       statHdrs <- statHdrs[nchar(statHdrs) > 0]
@@ -65,11 +65,11 @@ scrapeBasinChars <- function(siteIds) {
                               stringsAsFactors = FALSE)
         }
         
+        results <- dplyr::bind_rows(results, finDF); rm(finDF)
+        
       }
       
     }
-    
-    results <- dplyr::bind_rows(results, finDF); rm(finDF)
     
   }
   
