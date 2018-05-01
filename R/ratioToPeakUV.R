@@ -228,13 +228,17 @@ ratioToPeakUV <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = F
     
     thresholds <- quantile(kVal, probs = c(0.05, 0.95), na.rm = TRUE)
     
-    kVal <- kVal[(kVal > thresholds[1]) == TRUE]
-    
-    kVal <- kVal[(kVal < thresholds[2]) == TRUE]
-    
+    if (length(na.omit(kVal)) > 3) {
+      
+      kVal <- kVal[(kVal > thresholds[1]) == TRUE]
+      
+      kVal <- kVal[(kVal < thresholds[2]) == TRUE]
+      
+      kDF <- dplyr::filter(kDF, kVal > thresholds[1] & kVal < thresholds[2])
+      
+    }
+
     kVal <- na.omit(kVal)
-    
-    kDF <- dplyr::filter(kDF, kVal > thresholds[1] & kVal < thresholds[2])
     
     if (getDF == FALSE) {
       
