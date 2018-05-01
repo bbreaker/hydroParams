@@ -210,9 +210,9 @@ ratioToPeakUV <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = F
           
         }
 
-        kVal_ <- signif(baseDF$flow / fallChunk[1, 2], 2)
+        kVal_ <- signif(baseDF$flow / max(chunk$flow), 2)
         
-        kDF_ <- data.frame(dates = baseDF$dates, breakFlow = baseDF$flow, eventPeak = fallChunk[1, 2])
+        kDF_ <- data.frame(dates = baseDF$dates, breakFlow = baseDF$flow, eventPeak = max(chunk$flow))
         
         kDF_$kVal <- signif(kDF_$breakFlow / kDF_$eventPeak)
 
