@@ -210,9 +210,9 @@ ratioToPeakUV <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = F
           
         }
 
-        kVal_ <- signif(baseDF$flow / max(chunk$flow), 2)
+        kVal_ <- signif(baseDF$flow / max(chunk$flow, na.rm = TRUE), 2)
         
-        kDF_ <- data.frame(dates = baseDF$dates, breakFlow = baseDF$flow, eventPeak = max(chunk$flow))
+        kDF_ <- data.frame(dates = baseDF$dates, breakFlow = baseDF$flow, eventPeak = max(chunk$flow, na.rm = TRUE))
         
         kDF_$kVal <- signif(kDF_$breakFlow / kDF_$eventPeak)
 
@@ -228,15 +228,11 @@ ratioToPeakUV <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = F
     
     thresholds <- quantile(kVal, probs = c(0.05, 0.95), na.rm = TRUE)
     
-    if (length(na.omit(kVal)) > 3) {
+    kVal <- kVal[((kVal > thresholds[1]) + 0.01) == TRUE]
       
-      kVal <- kVal[(kVal > thresholds[1]) == TRUE]
+    kVal <- kVal[((kVal < thresholds[2]) - 0.01) == TRUE]
       
-      kVal <- kVal[(kVal < thresholds[2]) == TRUE]
-      
-      kDF <- dplyr::filter(kDF, kVal > thresholds[1] & kVal < thresholds[2])
-      
-    }
+    kDF <- dplyr::filter(kDF, (kVal + 0.01) > thresholds[1] & (kVal - 0.01) < thresholds[2])
 
     kVal <- na.omit(kVal)
     
