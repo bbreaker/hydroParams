@@ -20,7 +20,7 @@ Recession constants that are above the 95th percentile and below the 5th percent
 Single Station
 ==============
 
-This first code chunk will demostrate use for a single location, the graph at the end is interactive. Zoom in to the events and let me know what you think about placement of the break point. They all seem to fall where I would have picked them without the analysis. However, there are some options for adjusting breakpoint placement that could be explored.
+For evaluation of a single USGS streamflow gaging station;
 
 ``` r
 # to get the function into your R session
@@ -52,13 +52,13 @@ knitr::kable(rKval)
 
 | siteID   | dates               |  breakFlow|  eventPeak|      kVal|
 |:---------|:--------------------|----------:|----------:|---------:|
-| 07055680 | 2009-09-23 06:30:00 |       2200|      13200|  0.166667|
-| 07055680 | 2011-04-26 17:15:00 |       6290|      26900|  0.233829|
-| 07055680 | 2015-05-12 06:30:00 |       3410|      13500|  0.252593|
+| 07055680 | 2009-09-23 06:00:00 |       2250|      13200|  0.170455|
+| 07055680 | 2011-04-26 17:00:00 |       6380|      26900|  0.237175|
+| 07055680 | 2015-05-12 07:30:00 |       3200|      13500|  0.237037|
 | 07055680 | 2015-06-16 21:45:00 |       4060|      18400|  0.220652|
 | 07055680 | 2017-04-23 01:15:00 |       3310|      12600|  0.262698|
-| 07055680 | 2017-04-27 12:30:00 |       3490|      13400|  0.260448|
-| 07055680 | 2017-04-30 20:15:00 |       7460|      23600|  0.316102|
+| 07055680 | 2017-04-27 12:45:00 |       3480|      13400|  0.259701|
+| 07055680 | 2017-04-30 20:00:00 |       7560|      23600|  0.320339|
 
 ``` r
 # plot the events isolated by the function

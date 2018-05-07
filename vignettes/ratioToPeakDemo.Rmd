@@ -28,7 +28,7 @@ Recession constants that are above the 95th percentile and below the 5th percent
 
 # Single Station
 
-This first code chunk will demostrate use for a single location, the graph at the end is interactive. Zoom in to the events and let me know what you think about placement of the break point. They all seem to fall where I would have picked them without the analysis. However, there are some options for adjusting breakpoint placement that could be explored.
+For evaluation of a single USGS streamflow gaging station;
 
 ```{r, fig.height=14, fig.width=10}
 # to get the function into your R session
