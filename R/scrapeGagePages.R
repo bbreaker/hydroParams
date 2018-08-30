@@ -1,4 +1,4 @@
-scrapeBasinChars <- function(siteIds) { 
+scrapeGagePages <- function(siteIds) { 
   
   library(rvest) 
   library(dplyr) 
