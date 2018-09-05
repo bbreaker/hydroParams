@@ -83,12 +83,13 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
         
         for (j in seq(1, nrow(chunk) - daysLim, 1)) {
           
-          testDF_ <- data.frame(first = j, last = j + daysLim, cumVal = sum(chunk[j, 2]:chunk[j + daysLim, 2]))
+          testDF_ <- data.frame(first = j, last = j + (daysLim - 1), 
+                                cumVal = sum(chunk[j, 2]:chunk[j + (daysLim - 1), 2]))
           testDF <- dplyr::bind_rows(testDF, testDF_)
           
         }
         
-        testDF <- dplyr::filter(testDF, cumVal == max(cumVal))
+        testDF <- dplyr::filter(testDF, cumVal == max(cumVal, na.rm = TRUE))
         
         chunk <- chunk[testDF$first:testDF$last, ]
         
