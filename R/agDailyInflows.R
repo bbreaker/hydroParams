@@ -14,7 +14,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
   if (is.null(adjVal)) {
     newDF$runOff <- newDF$runOff
   } else {
-    newDF$runOff <- if_else(newDF$runOff < (newDF$flow * 0.05), 0, round(newDF$runOff, 2))
+    newDF$runOff <- dplyr::if_else(newDF$runOff < (newDF$flow * 0.05), 0, round(newDF$runOff, 2))
   }
   
   # if runOff is 0, at baseflow, otherwise, event is occurring
@@ -29,7 +29,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
   
   # number the events
   newDFRLEDF <- newDFRLE %>% 
-    dplyr::mutate(qualk = if_else(values == "base", 0, 1)) %>% 
+    dplyr::mutate(qualk = dplyr::if_else(values == "base", 0, 1)) %>% 
     group_by(qualk) %>% 
     dplyr::mutate(index = ifelse(qualk == 0, 0, 1:n())) %>% 
     data.frame()
@@ -51,7 +51,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
         dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = (sum(flow) * 86400), 
                          date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
         dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")),
-                      watYr = if_else(mn >= 10, yr + 1, yr)) %>% 
+                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
         data.frame()
       
     } else if (nrow(chunk) <= daysLim) {
@@ -61,7 +61,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
         dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = (sum(flow) * 86400), 
                          date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
         dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")),
-                      watYr = if_else(mn >= 10, yr + 1, yr)) %>% 
+                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
         data.frame()
       
     } else {
@@ -74,7 +74,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
           dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = (sum(flow) * 86400), 
                            date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
           dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")),
-                        watYr = if_else(mn >= 10, yr + 1, yr)) %>% 
+                        watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
           data.frame()
         
       } else {
@@ -98,7 +98,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
           dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = (sum(flow) * 86400), 
                            date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
           dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")),
-                        watYr = if_else(mn >= 10, yr + 1, yr)) %>% 
+                        watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
           data.frame() 
         
         }
