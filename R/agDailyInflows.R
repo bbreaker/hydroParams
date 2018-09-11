@@ -54,7 +54,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
                       watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
         data.frame()
       
-    } else if (nrow(chunk) <= daysLim) {
+    } else if ((nrow(chunk) - 2) <= daysLim) {
       
       retVal_ <- chunk %>% 
         dplyr::filter(diffLog == "event") %>% 
@@ -64,44 +64,35 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
                       watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
         data.frame()
       
-    } else {
+    } else if ((nrow(chunk) - 2) > daysLim) { 
       
-      if ((nrow(chunk) - 1) == daysLim) {
+      chunk <- dplyr::filter(chunk, diffLog == "event")
+      
+      pkFlow <- max(chunk$flow)
+      
+      testDF <- data.frame() 
+      
+      for (j in seq(1, nrow(chunk) - daysLim, 1)) { 
         
-        retVal_ <- chunk %>% 
-          dplyr::filter(diffLog == "event") %>% 
-          dplyr::top_n(-1, flow) %>% 
-          dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = (sum(flow) * 86400), 
-                           date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
-          dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")),
-                        watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
-          data.frame()
+        testDF_ <- data.frame(first = j, last = j + (daysLim - 1), 
+                              cumVal = sum(chunk[j, 2]:chunk[j + (daysLim - 1), 2])) 
         
-      } else {
+        testDF <- dplyr::bind_rows(testDF, testDF_) 
         
-        testDF <- data.frame()
-        
-        for (j in seq(1, nrow(chunk) - daysLim, 1)) {
-          
-          testDF_ <- data.frame(first = j, last = j + (daysLim - 1), 
-                                cumVal = sum(chunk[j, 2]:chunk[j + (daysLim - 1), 2]))
-          testDF <- dplyr::bind_rows(testDF, testDF_)
-          
-        }
-        
-        testDF <- dplyr::filter(testDF, cumVal == max(cumVal, na.rm = TRUE))
-        
-        chunk <- chunk[testDF$first:testDF$last, ]
-        
-        retVal_ <- chunk %>% 
-          dplyr::filter(diffLog == "event") %>% 
-          dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = (sum(flow) * 86400), 
-                           date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
-          dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")),
-                        watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
-          data.frame() 
-        
-        }
+      }
+      
+      testDF <- dplyr::filter(testDF, cumVal == max(cumVal, na.rm = TRUE)) 
+      
+      chunk <- chunk[testDF$first:testDF$last, ] 
+      
+      retVal_ <- chunk %>% 
+        dplyr::summarize(nDays = n(), volFlow = (sum(flow) * 86400), 
+                         date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
+        dplyr::mutate(pkFlow = pkFlow) %>% 
+        dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")), 
+                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
+        dplyr::select(nDays, pkFlow, volFlow, date, mn, yr, watYr)
+        data.frame() 
       
     }
     
