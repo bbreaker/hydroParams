@@ -98,7 +98,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
     
     retVal <- dplyr::bind_rows(retVal, retVal_) 
     
-    }
+  }
   
   return(retVal)
   
