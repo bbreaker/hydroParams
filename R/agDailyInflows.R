@@ -44,6 +44,8 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
     
     chunk <- newDF[(chunk[1, 3]):(chunk[2, 3] + 1), ] 
     
+    startBaseQ <- chunk[1, 2]; endBaseQ <- chunk[nrow(chunk), 2]
+    
     if(is.null(daysLim)) {
       
       retVal_ <- chunk %>% 
@@ -53,7 +55,8 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
                          beginDate = as.Date(min(date), format = "%Y-%m-%d"), 
                          endDate = as.Date(max(date), format = "%Y-%m-%d")) %>% 
         dplyr::mutate(mn = as.numeric(format(midDate, "%m")), yr = as.numeric(format(midDate, "%Y")),
-                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>%
+                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr), 
+                      startBaseQ = startBaseQ, endBaseQ = endBaseQ) %>%
         data.frame()
       
     } else if ((nrow(chunk) - 2) <= daysLim) {
@@ -65,7 +68,8 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
                          beginDate = as.Date(min(date), format = "%Y-%m-%d"), 
                          endDate = as.Date(max(date), format = "%Y-%m-%d")) %>% 
         dplyr::mutate(mn = as.numeric(format(midDate, "%m")), yr = as.numeric(format(midDate, "%Y")),
-                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
+                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr), 
+                      startBaseQ = startBaseQ, endBaseQ = endBaseQ) %>% 
         data.frame()
       
     } else if ((nrow(chunk) - 2) > daysLim) { 
@@ -96,8 +100,9 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
                          endDate = as.Date(max(date), format = "%Y-%m-%d")) %>% 
         dplyr::mutate(pkFlow = pkFlow) %>% 
         dplyr::mutate(mn = as.numeric(format(midDate, "%m")), yr = as.numeric(format(midDate, "%Y")), 
-                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
-        dplyr::select(nDays, pkFlow, volFlow, midDate, beginDate, endDate, mn, yr, watYr)
+                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr), 
+                      startBaseQ = startBaseQ, endBaseQ = endBaseQ) %>% 
+        dplyr::select(nDays, pkFlow, volFlow, midDate, beginDate, endDate, mn, yr, watYr, startBaseQ, endBaseQ) %>% 
         data.frame() 
       
     }
