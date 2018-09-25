@@ -49,9 +49,11 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
       retVal_ <- chunk %>% 
         dplyr::filter(diffLog == "event") %>% 
         dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = (sum(flow) * 86400), 
-                         date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
-        dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")),
-                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
+                         midDate = as.Date(median(date), format = "%Y-%m-%d"),
+                         beginDate = as.Date(min(date), format = "%Y-%m-%d"), 
+                         endDate = as.Date(max(date), format = "%Y-%m-%d")) %>% 
+        dplyr::mutate(mn = as.numeric(format(midDate, "%m")), yr = as.numeric(format(midDate, "%Y")),
+                      watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>%
         data.frame()
       
     } else if ((nrow(chunk) - 2) <= daysLim) {
@@ -59,8 +61,10 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
       retVal_ <- chunk %>% 
         dplyr::filter(diffLog == "event") %>% 
         dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = (sum(flow) * 86400), 
-                         date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
-        dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")),
+                         midDate = as.Date(median(date), format = "%Y-%m-%d"),
+                         beginDate = as.Date(min(date), format = "%Y-%m-%d"), 
+                         endDate = as.Date(max(date), format = "%Y-%m-%d")) %>% 
+        dplyr::mutate(mn = as.numeric(format(midDate, "%m")), yr = as.numeric(format(midDate, "%Y")),
                       watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
         data.frame()
       
@@ -87,11 +91,13 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
       
       retVal_ <- chunk %>% 
         dplyr::summarize(nDays = n(), volFlow = (sum(flow) * 86400), 
-                         date = as.Date(median(date), format = "%Y-%m-%d")) %>% 
+                         midDate = as.Date(median(date), format = "%Y-%m-%d"), 
+                         beginDate = as.Date(min(date), format = "%Y-%m-%d"), 
+                         endDate = as.Date(max(date), format = "%Y-%m-%d")) %>% 
         dplyr::mutate(pkFlow = pkFlow) %>% 
-        dplyr::mutate(mn = as.numeric(format(date, "%m")), yr = as.numeric(format(date, "%Y")), 
+        dplyr::mutate(mn = as.numeric(format(midDate, "%m")), yr = as.numeric(format(midDate, "%Y")), 
                       watYr = dplyr::if_else(mn >= 10, yr + 1, yr)) %>% 
-        dplyr::select(nDays, pkFlow, volFlow, date, mn, yr, watYr)
+        dplyr::select(nDays, pkFlow, volFlow, midDate, beginDate, endDate, mn, yr, watYr)
         data.frame() 
       
     }
