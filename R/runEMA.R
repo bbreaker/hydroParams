@@ -1,3 +1,13 @@
+waterYear <- function (x, numeric = FALSE) {
+  x <- as.POSIXlt(x)
+  yr <- x$year + 1900L
+  mn <- x$mon + 1L
+  yr <- yr + ifelse(mn < 10L, 0L, 1L)
+  if (numeric) 
+    return(yr)
+  ordered(yr)
+}
+
 runEMA <- function(pathFQ, date, flow, interval, beginYr = NULL, endYr = NULL, 
                    skewOpt = "STATION", genSkew = NULL, skewSE = NULL, killOut = TRUE) {
   
