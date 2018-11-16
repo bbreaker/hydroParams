@@ -1,8 +1,23 @@
-agRunData <- function(dssFile, makeList = FALSE) {
+agRunData <- function(dssFile, pathKeep = NULL, pathDrop = NULL, makeList = FALSE) {
   
   paths <- getAllPaths(dssFile)
   
-  theTSC <- data.frame(getFullDT(dssFile, paths))
+  if(is.null(pathKeep) & is.null(pathDrop)) {
+    paths <- paths
+  } else if (is.null(pathDrop) & !is.null(pathKeep)) {
+    pathFilter <- paste(pathKeep, collapse = "|")
+    paths <- paths[grepl(pathFilter, paths)]
+  } else if (!is.null(pathDrop) & is.null(pathKeep)) {
+    pathFilter <- paste(pathDrop, collapse = "|")
+    paths <- paths[!grepl(pathFilter, paths)]
+  } else {
+    pathFilter <- paste(pathKeep, collapse = "|")
+    paths <- paths[grepl(pathFilter, paths)]
+    pathFilter <- paste(pathDrop, collapse = "|")
+    paths <- paths[!grepl(pathFilter, paths)]
+  }
+  
+  theTSC <- data.frame(getFullDT(dssFile, paths, discard_empty = FALSE))
   
   allPaths <- data.frame(feature = as.character(), val = as.character(), 
                          date = as.character(), timeStep = as.character(), 
@@ -22,7 +37,13 @@ agRunData <- function(dssFile, makeList = FALSE) {
   numInts <- as.numeric((difftime(max(theTSC$datetime), min(theTSC$datetime), 
                                   units = "mins") / tStep) + 1)
   
-  allPaths$qualDF <- paste(allPaths$feature, allPaths$val, sep = ":")
+  allPaths <- allPaths %>% 
+    dplyr::mutate(qualDF = paste(allPaths$feature, allPaths$val, sep = ":")) %>% 
+    data.frame()
+  
+  allPathsRLE <- data.frame(lengths = rle(allPaths$qualDF)[[1]], 
+                            values = rle(allPaths$qualDF)[[2]],
+                            stringsAsFactors = FALSE)
   
   qual <- unique(allPaths$qualDF)
   
