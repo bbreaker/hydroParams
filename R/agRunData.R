@@ -24,8 +24,15 @@ agRunData <- function(dssFile, pathKeep = NULL, pathDrop = NULL, makeList = FALS
                          run = as.character())
   
   for(i in 1:length(paths)) { 
-    newMat <- stringr::str_split_fixed(paths[i], "/", n = 8) 
-    newVec <- data.frame(t(newMat[1, which(nchar(newMat) > 0)])) 
+    if(stringr::str_split(paths[i], "/")[[1]][2] == "") {
+      newMat <- stringr::str_split_fixed(paths[i], "/", n = 8) 
+      newVec <- data.frame(t(newMat[1, which(nchar(newMat) > 0)]))
+    } else {
+      newMat <- stringr::str_split_fixed(paths[i], "/", n = 8) 
+      newVec <- data.frame(t(newMat[1, 3:7])) 
+    }
+    #newMat <- stringr::str_split_fixed(paths[i], "/", n = 8) 
+    #newVec <- data.frame(t(newMat[1, which(nchar(newMat) > 0)])) 
     names(newVec) <- names(allPaths) 
     allPaths <- dplyr::bind_rows(allPaths, newVec) 
   }
@@ -84,7 +91,7 @@ agRunData <- function(dssFile, pathKeep = NULL, pathDrop = NULL, makeList = FALS
   
   theTSC$param <- paramVec
   
-  theTSC$run <- unique(allPaths$run)
+  #theTSC$run <- unique(allPaths$run)
   
   if(makeList == TRUE) {
     theTSC$listVal <- paste(theTSC$feature, theTSC$param, sep = ":")
