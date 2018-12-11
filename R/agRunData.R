@@ -60,6 +60,8 @@ agRunData <- function(dssFile, pathKeep = NULL, pathDrop = NULL, makeList = FALS
   
   theTSC$timeDff <- c(NA, diff(theTSC$datetime))
   
+  theTSC$timeDff <- ifelse(theTSC$timeDff != 1 & theTSC$timeDff > 1, 1, theTSC$timeDff)
+  
   timeRLE <- data.frame(lengths = rle(theTSC$timeDff)[[1]], 
                         values = rle(theTSC$timeDff)[[2]],
                         stringsAsFactors = FALSE)
