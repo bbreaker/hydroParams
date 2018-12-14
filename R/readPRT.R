@@ -1,5 +1,16 @@
 readPRT <- function(prtFile) { 
   newText <- readLines(prtFile)
+  nPks <- "Number of peaks in record"
+  nPks <- newText[grep(pattern = nPks, newText)]
+  nPks <- as.numeric(unlist(stringr::str_split(nPks, "="))[2])
+  nPksUsed <- "Systematic peaks in analysis"
+  nPksUsed <- newText[grep(pattern = nPksUsed, newText)]
+  nPksUsed <- as.numeric(unlist(stringr::str_split(nPksUsed, "="))[2])
+  skewOpt <- "Skew option"
+  skewOpt <- newText[grep(pattern = skewOpt, newText)]
+  skewOpt <- as.character(unlist(stringr::str_split(skewOpt, "="))[2])
+  newTbl <- data.frame(nPeaks = nPks, nPeaksUsed = nPksUsed, 
+                       skewOption = skewOpt, stringsAsFactors = FALSE)
   topOut1 <- "                            MEAN     DEVIATION     SKEW "
   newTbl1 <- newText[-c(1:grep(pattern = topOut1, newText))]
   newTbl1 <- newTbl1[2:3]
@@ -62,6 +73,7 @@ readPRT <- function(prtFile) {
   }
   #names(newTbl3F) <- c("watYr", "pkFlow", "hspp", "comment")
   prtList <- list()
+  prtList$info <- newTbl
   prtList$parms <- newTbl1
   prtList$estimates <- newTbl2
   prtList$plotPositions <- newTbl3F
