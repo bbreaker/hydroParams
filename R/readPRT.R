@@ -36,7 +36,7 @@ readPRT <- function(prtFile) {
   #newTbl2 <- gsub("--", )
   newTbl2 <- read.table(text = newTbl2, stringsAsFactors = FALSE)
   newTbl2[, c(4, 5, 6)] <- apply(newTbl2[, c(4, 5, 6)], 2, function(x) as.numeric(x))
-  names(newTbl2) <- c("AEP", "emaStation", "emaRegional", "variance", "lwr", "upr")
+  names(newTbl2) <- c("AEP", "emaRegional", "emaStation", "variance", "lwr", "upr")
   topOut3 <- "    YEAR   DISCHARGE   ESTIMATE      LOW      HIGH"
   newTbl3 <- newText[-c(1:grep(pattern = topOut3, newText))]
   newTbl3 <- newTbl3[c(1:which(newTbl3 == ""))]
