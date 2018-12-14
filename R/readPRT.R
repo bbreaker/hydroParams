@@ -16,7 +16,7 @@ readPRT <- function(prtFile) {
     if(testVal == TRUE) {
       test1 <- stringr::str_sub(testTbl2, 1, 9)
       test2 <- stringr::str_sub(testTbl2, 10, nchar(testTbl2))
-      test1 <- paste0(test1, " 0.")
+      test1 <- paste0(test1, " NA")
       newTbl2[i] <- paste0(test1, test2)
     } else {
       newTbl2[i] <- newTbl2[i]
@@ -24,6 +24,7 @@ readPRT <- function(prtFile) {
   }
   #newTbl2 <- gsub("--", )
   newTbl2 <- read.table(text = newTbl2, stringsAsFactors = FALSE)
+  newTbl2[, c(4, 5, 6)] <- apply(newTbl2[, c(4, 5, 6)], 2, function(x) as.numeric(x))
   names(newTbl2) <- c("AEP", "emaStation", "emaRegional", "variance", "lwr", "upr")
   topOut3 <- "    YEAR   DISCHARGE   ESTIMATE      LOW      HIGH"
   newTbl3 <- newText[-c(1:grep(pattern = topOut3, newText))]
