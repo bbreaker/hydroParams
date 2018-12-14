@@ -30,7 +30,7 @@ readPRT <- function(prtFile) {
   newTbl3 <- newTbl3[c(1:which(newTbl3 == ""))]
   newTbl3 <- newTbl3[-c(length(newTbl3))]
   newTbl3F <- data.frame(read.table(text = newTbl3[1]), stringsAsFactors = FALSE)
-  newTbl3F$comment <- "used"
+  newTbl3F$comment <- "Peak Used"
   for (i in 2:length(newTbl3)) {
     newTbl3_ <- data.frame(read.table(text = newTbl3[i])) 
     if(ncol(newTbl3_) == 4) {
@@ -38,7 +38,7 @@ readPRT <- function(prtFile) {
       names(newTbl3_) <- c("V1", "V2", "V3")
       newTbl3_$comment <- "PILF"
     } else {
-      newTbl3_$comment <- "used"
+      newTbl3_$comment <- "Peak Used"
     }
     newTbl3F <- dplyr::bind_rows(newTbl3F, newTbl3_)
   }
