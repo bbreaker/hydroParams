@@ -29,20 +29,37 @@ readPRT <- function(prtFile) {
   newTbl3 <- newText[-c(1:grep(pattern = topOut3, newText))]
   newTbl3 <- newTbl3[c(1:which(newTbl3 == ""))]
   newTbl3 <- newTbl3[-c(length(newTbl3))]
+  if (nchar(newTbl3[length(newTbl3)]) == 1) {
+    newTbl3 <- newTbl3[-c(length(newTbl3))]
+  }
   newTbl3F <- data.frame(read.table(text = newTbl3[1]), stringsAsFactors = FALSE)
+  if (ncol(newTbl3F) == 3) { 
+    names(newTbl3F) <- c("watYr", "pkFlow", "hspp")
+  } else {
+    names(newTbl3F) <- c("watYr", "pkFlow", "hspp", "lowerLim", "upperLim")
+  }
   newTbl3F$comment <- "Peak Used"
   for (i in 2:length(newTbl3)) {
     newTbl3_ <- data.frame(read.table(text = newTbl3[i])) 
-    if(ncol(newTbl3_) == 4) {
+    if(grepl("[*]", newTbl3_[1, 1])) {
       newTbl3_ <- newTbl3_[, -1]
-      names(newTbl3_) <- c("V1", "V2", "V3")
+      if (ncol(newTbl3_) == 3) { 
+        names(newTbl3_) <- c("watYr", "pkFlow", "hspp")
+      } else {
+        names(newTbl3_) <- c("watYr", "pkFlow", "hspp", "lowerLim", "upperLim")
+      }
       newTbl3_$comment <- "PILF"
     } else {
+      if (ncol(newTbl3_) == 3) { 
+        names(newTbl3_) <- c("watYr", "pkFlow", "hspp")
+      } else {
+        names(newTbl3_) <- c("watYr", "pkFlow", "hspp", "lowerLim", "upperLim")
+      }
       newTbl3_$comment <- "Peak Used"
     }
     newTbl3F <- dplyr::bind_rows(newTbl3F, newTbl3_)
   }
-  names(newTbl3F) <- c("watYr", "pkFlow", "hspp", "comment")
+  #names(newTbl3F) <- c("watYr", "pkFlow", "hspp", "comment")
   prtList <- list()
   prtList$parms <- newTbl1
   prtList$estimates <- newTbl2
