@@ -1,12 +1,10 @@
-# started Dec 23, 2017 for package development
-
 moveAve <- function(series, numDays) {
   
   stats::filter(series, rep(1 / numDays, numDays), sides = 2)
   
 }
 
-recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, siteID = NULL, drnArea = NULL) {
+recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, siteID = NULL, drnArea = NULL) {
   
   library(dplyr, quietly = TRUE)
   library(zoo, quietly = TRUE)
@@ -305,11 +303,13 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
             dplyr::top_n(-6) %>% 
             data.frame()
           
-          recessK <- lm(diffTime ~ log10(flow), data = recessChunk)
+          recessKGW2 <- lm(diffTime ~ log10(flow), data = recessChunk)
           
-          recessK <- 1 / recessK$coefficients[1]
+          recessKGW2 <- 1 / recessK$coefficients[1]
           
-          kVal <- recessK
+          recessCoefGW2 <- 1/-log(recessK)
+          
+          
           
         }
         
@@ -365,7 +365,7 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
       }
       
     }
-      
+    
   }
   
   return(retVal)
