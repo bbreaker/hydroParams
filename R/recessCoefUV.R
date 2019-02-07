@@ -4,11 +4,13 @@ moveAve <- function(series, numDays) {
   
 }
 
-recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, siteID = NULL, drnArea = NULL) {
+recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = TRUE, siteID = NULL, drnArea = NULL) {
   
   library(dplyr, quietly = TRUE)
   library(zoo, quietly = TRUE)
   library(segmented, quietly = TRUE)
+  library(strucchange, quietly = TRUE)
+  library(mgcv, quietly = TRUE)
   
   if (any(is.na(flow))) {
     
@@ -41,10 +43,10 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE
       
       testDFDailyInterQ <- na.omit(testDFDailyInterQ)
       
-      testDFDailyInterQ$runOffQ <- ifelse(testDFDailyInterQ$runOffQ == 0, 0.001, testDFDailyInterQ$runOffQ)
+      testDFDailyInterQ$runOffQ <- ifelse(testDFDailyInterQ$runOffQ <= 0, 0.001, testDFDailyInterQ$runOffQ)
       
       testDFDailyInterQ$interQ <- runPART(flow = testDFDailyInterQ$runOffQ, dates = testDFDailyInterQ$Date, 
-                                          drnArea = (drnArea * drnAreaAdj))
+                                          drnArea = drnArea * drnAreaAdj)
       
       #testDFDailyInterQ$interQ <- runBFI(flow = testDFDailyInterQ$runOffQ, dates = testDFDailyInterQ$Date)
       
@@ -87,11 +89,11 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE
       
       testDF <- dplyr::left_join(testDF, testRle, "cumVal")
       
-      if (is.na(testDF[1, 18])) {testDF[1, 18] <- 1}
+      if (is.na(testDF[1, 18])) {testDF[1, 18] <- 0}
       
       if (is.na(testDF[nrow(testDF), 18])) {testDF[nrow(testDF), 18] <- max(testDF$eventVal, na.rm = TRUE)}
       
-      testDF$eventVal <- na.locf(testDF$eventVal, fromLast = TRUE)
+      testDF$eventVal <- zoo::na.locf(testDF$eventVal, fromLast = TRUE)
       
       eventCut <- quantile(testDF$flow, probs = eventProb)
       
@@ -106,10 +108,8 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE
       
       eventNums <- unique(testDFEvents$eventVal)
       
-      kVal <- as.numeric()
-      
-      kDF <- data.frame(dates = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
-                        eventPeak = NA, kVal = NA)
+      retVal <- data.frame(siteID = NA, dates = as.POSIXct("1970-01-01, 00:00:00"), eventPeak = NA, 
+                           recessCoefGW1 = NA, storDepGW1 = NA, recessCoefGW2 = NA, storDepGW1 = NA)
       
       for (i in seq(1, length(eventNums), 1)) {
         
@@ -125,33 +125,9 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE
         
         fallChunk$numTime <- as.numeric(fallChunk$dates)
         
-        testLm <- tryCatch({ 
+        testBP <- tryCatch({ 
           
-          lm(slope ~ numTime, data = fallChunk) 
-          
-        },
-        
-        error = function(cond) {
-          
-          "failure"
-          
-        })
-        
-        testSeg <- tryCatch({ 
-          
-          segmented(testLm) 
-          
-        }, 
-        
-        error = function(cond) { 
-          
-          "failure" 
-          
-        })
-        
-        testLm2 <- tryCatch({ 
-          
-          lm(flow ~ numTime, data = fallChunk) 
+          strucchange::breakpoints(slopeAve ~ 1, data = fallChunk, h = 4, breaks = 3)
           
         },
         
@@ -161,114 +137,25 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE
           
         })
         
-        testSeg2 <- tryCatch({ 
+        if (length(testBP) == 1) {
           
-          segmented(testLm2) 
+          recessCoefGW1 <- 9999
           
-        }, 
-        
-        error = function(cond) { 
+          storDepGW1 <- 9999
           
-          "failure" 
+          recessCoefGW2 <- 9999
           
-        })
-        
-        if (length(testSeg) == 1 & length(testSeg2) == 1) {
-          
-          kVal_ <- NA
-          
-          kDF_ <- data.frame(dates = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
-                             eventPeak = NA, kVal = NA)
-          
-        } else if (length(testSeg) != 1 & length(testSeg2) == 1) {
-          
-          breakDate <- as.POSIXct(summary.segmented(testSeg)$psi[1, 2], 
-                                  origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                  tz = attr(testDF$dates, "tzone"))
-          
-          breakDate <- lubridate::round_date(breakDate, unit = "15 minute")
-          
-          baseDF <- fallChunk[which(fallChunk$dates == breakDate), ]
-          
-          baseDF <- baseDF[, c(1, 2)] 
-          
-          nRowVal <- round(nrow(baseDF) / 2, 0)
-          
-          nRowVal <- ifelse(nRowVal == 0, 1, nRowVal)
-          
-          baseDF <- baseDF[nRowVal, ]
-          
-        } else if (length(testSeg) == 1 & length(testSeg2) != 1) {
-          
-          breakDate2 <- as.POSIXct(summary.segmented(testSeg2)$psi[1, 2], 
-                                   origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                   tz = attr(testDF$dates, "tzone"))
-          
-          breakDate2 <- lubridate::round_date(breakDate2, unit = "15 minute")
-          
-          baseDF <- fallChunk[which(fallChunk$dates == breakDate2), ]
-          
-          baseDF <- baseDF[, c(1, 2)] 
-          
-          nRowVal <- round(nrow(baseDF) / 2, 0)
-          
-          nRowVal <- ifelse(nRowVal == 0, 1, nRowVal)
-          
-          baseDF <- baseDF[nRowVal, ]
+          storDepGW2 <- 9999
           
         } else {
           
-          breakDate <- as.POSIXct(summary.segmented(testSeg)$psi[1, 2], 
-                                  origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                  tz = attr(testDF$dates, "tzone"))
+          breaksDF <- fallChunk[testBP$breakpoints, ]
           
-          breakDate2 <- as.POSIXct(summary.segmented(testSeg2)$psi[1, 2], 
-                                   origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                   tz = attr(testDF$dates, "tzone"))
-          
-          if (abs(difftime(breakDate, breakDate2, units = "mins")) < 15) {
-            
-            #breakDates <- as.POSIXct(min(c(breakDate, breakDate2)), 
-            #                         origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-            #                         tz = attr(testDF$dates, "tzone"))
-            
-            breakDates <- as.POSIXct(round(as.double(breakDate) / (15*60)) * (15*60), 
-                                     origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                     tz = attr(testDF$dates, "tzone"))
-            
-            baseDF <- fallChunk[which(fallChunk$dates >= breakDates), ]
-            
-            baseDF <- baseDF[1, ]
-            
-          } else {
-            
-            breakDates <- data.frame(dates = as.POSIXct("1970-01-01 00:00:00", 
-                                                        origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                                        tz = attr(testDF$dates, "tzone")))
-            
-            breakDates[2, 1] <- breakDate; breakDates[3, 1] <- breakDate2; breakDates <- breakDates[-1, ]
-            
-            baseDF <- fallChunk[which(fallChunk$dates >= min(breakDates) & fallChunk$dates <= max(breakDates)), ]
-            
-            baseDF <- baseDF[, c(1, 2)] 
-            
-            nRowVal <- round(nrow(baseDF) / 2, 0)
-            
-            nRowVal <- ifelse(nRowVal == 0, 1, nRowVal)
-            
-            baseDF <- baseDF[nRowVal, ]
-            
-          }
-          
-          kVal_ <- signif(baseDF$flow / max(chunk$flow, na.rm = TRUE), 2)
-          
-          kDF_ <- data.frame(dates = baseDF$dates, breakFlow = baseDF$flow, eventPeak = max(chunk$flow, na.rm = TRUE))
-          
-          kDF_$kVal <- signif(kDF_$breakFlow / kDF_$eventPeak)
+          baseDF <- breaksDF[2, ]
           
           chunkDaily <- chunk %>% 
             dplyr::group_by(Date) %>% 
-            dplyr::summarize(dailyQ = mean(dailyQ), 
+            dplyr::summarize(flow = mean(dailyQ), 
                              bfiQ = mean(bfiQ), 
                              runOffBfiQ = mean(runOffBfiQ), 
                              partQ = mean(partQ), 
@@ -285,7 +172,23 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE
                           absSlopeRunOffPartQ = abs(slopeRunOffPartQ)) %>% 
             dplyr::mutate(slopeInterQ = c(NA, diff(log10(interQ)) / diff(numDate)), 
                           absSlopeInterQ = abs(slopeInterQ)) %>% 
+            dplyr::mutate(percDiff = (flow - partQ) / (flow + partQ)) %>% 
+            dplyr::filter(between(row_number(), which.max(flow), n())) %>% 
             data.frame()
+          
+          chunkGAM <- gam(percDiff ~ s(log10(flow), k = (nrow(chunkDaily) - 1)), data = chunkDaily)
+          
+          fallChunk <- fallChunk %>% 
+            dplyr::mutate(percDiff = as.numeric(predict(chunkGAM, fallChunk))) %>% 
+            dplyr::mutate(bFlow = flow - (flow * percDiff)) %>% 
+            dplyr::mutate(runOff = flow - bFlow) %>% 
+            data.frame()
+          
+          runOffBP <- breakpoints(log(runOff) ~ 1, data = fallChunk, h = 4, breaks = 3)
+          
+          runOffBPDF <- fallChunk[runOffBP$breakpoints, ]
+          
+          # next step... convert daily means to uv time-series based on % diff between daily means and interpolation from max values
           
           chunkDailyEval <- chunkDaily %>% 
             dplyr::summarize(maxBfiQ = max(bfiQ), 
@@ -296,78 +199,48 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE
             data.frame()
           
           recessChunk <- fallChunk %>% 
-            dplyr::filter(dates >= baseDF$dates) %>% 
+            dplyr::filter(dates >= runOffBPDF[3, 1]) %>% 
             dplyr::mutate(diffTime = ((numDate / 3600) - lag(numDate / 3600, 1))) %>% 
             dplyr::mutate(diffTime = ifelse(is.na(diffTime), 0, diffTime)) %>% 
             dplyr::mutate(diffTime = cumsum(diffTime)) %>% 
-            dplyr::top_n(-6) %>% 
+            dplyr::mutate(runOff = log(runOff)) %>% 
+            dplyr::mutate(bFlow = log(bFlow)) %>% 
+            #dplyr::top_n(-6) %>% 
             data.frame()
           
-          recessKGW2 <- lm(diffTime ~ log10(flow), data = recessChunk)
+          recessLmGW1 <- lm(runOff ~ diffTime, data = na.omit(recessChunk))
           
-          recessKGW2 <- 1 / recessK$coefficients[1]
+          recessCoefGW1 <- 1 / (recessLmGW1$coefficients[2] * -1)
           
-          recessCoefGW2 <- 1/-log(recessK)
+          storDepGW1 <- ((exp(max(recessChunk$runOff, na.rm = TRUE))) / (3.9*27878400)) / (recessLmGW1$coefficients[2] * -1)
           
+          recessLmGW2 <- lm(bFlow ~ diffTime, data = na.omit(recessChunk))
           
+          recessCoefGW2 <- 1 / (recessLmGW2$coefficients[2] * -1)
           
-        }
-        
-        kVal <- c(kVal, kVal_)
-        
-        kDF <- dplyr::bind_rows(kDF, kDF_)
-        
-        kDF <- kDF[!duplicated(kDF$dates), ]
-        
-      }
-      
-      #thresholds <- quantile(kVal, probs = c(0.05, 0.95), na.rm = TRUE)
-      #
-      #kVal <- kVal[((kVal > thresholds[1]) + 0.01) == TRUE]
-      #
-      #kVal <- kVal[((kVal < thresholds[2]) - 0.01) == TRUE]
-      #
-      #kDF <- dplyr::filter(kDF, (kVal + 0.01) > thresholds[1] & (kVal - 0.01) < thresholds[2])
-      #
-      #kVal <- na.omit(kVal)
-      
-      if (getDF == FALSE) {
-        
-        if (is.null(siteID)) {
+          storDepGW2 <- ((exp(max(recessChunk$bFlow, na.rm = TRUE))) / (3.9*27878400)) / (recessLmGW2$coefficients[2] * -1)
           
-          retVal <- list(kVal = signif(mean(kVal, na.rm = TRUE), 3),
-                         nEvents = length(na.omit(kVal)))
+          peakRow <- dplyr::slice(chunk, which.max(flow))
           
-        } else {
+          if (nrow(peakRow) > 1) {
+            
+            peakRow <- peakRow[nrow(peakRow), ]
+            
+          }
           
-          retVal <- list(siteID = siteID,
-                         kVal = signif(mean(kVal, na.rm = TRUE), 3),
-                         nEvents = length(na.omit(kVal)))
+          retVal_ <- data.frame(siteID = siteID, dates = peakRow$dates, eventPeak = peakRow$flow, 
+                                recessCoefGW1 = recessCoefGW1, storDepGW1 = storDepGW1, 
+                                recessCoefGW2 = recessCoefGW2, storDepGW2 = storDepGW2)
           
         }
         
-      } else {
+        retVal <- dplyr::bind_rows(retVal, retVal_)
         
-        if (is.null(siteID)) {
-          
-          retVal <- na.omit(kDF)
-          
-        } else {
-          
-          retVal <- na.omit(kDF)
-          
-          retVal$siteID <- siteID
-          
-          retVal <- retVal[, c(5, 1:4)]
-          
-        }
-        
-      }
+      } 
       
+      return(retVal)
     }
     
   }
-  
-  return(retVal)
-  
+    
 }

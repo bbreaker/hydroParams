@@ -6,7 +6,7 @@ moveAve <- function(series, numDays) {
   
 }
 
-recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, siteID = NULL, drnArea = NULL) {
+recessKUV <- function(flow, dates, eventProb = 0.99, getDF = FALSE, siteID = NULL, drnArea = NULL) {
   
   library(dplyr, quietly = TRUE)
   library(zoo, quietly = TRUE)
@@ -29,7 +29,7 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
       testDFDaily <- testDF %>% 
         dplyr::mutate(Date = as.Date(dates)) %>% 
         dplyr::group_by(Date) %>% 
-        dplyr::summarize(dailyQ = mean(flow)) %>% 
+        dplyr::summarize(dailyQ = mean(flow, na.rm = TRUE)) %>% 
         dplyr::mutate(bfiQ = runBFI(dailyQ, Date)) %>% 
         dplyr::mutate(runOffBfiQ = dailyQ - bfiQ) %>% 
         dplyr::mutate(partQ = runPART(dailyQ, Date, drnArea = drnArea)) %>% 
@@ -89,7 +89,7 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
       
       testDF <- dplyr::left_join(testDF, testRle, "cumVal")
       
-      if (is.na(testDF[1, 18])) {testDF[1, 18] <- 1}
+      if (is.na(testDF[1, 18])) {testDF[1, 18] <- 0}
       
       if (is.na(testDF[nrow(testDF), 18])) {testDF[nrow(testDF), 18] <- max(testDF$eventVal, na.rm = TRUE)}
       
@@ -266,8 +266,6 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
           
           kDF_ <- data.frame(dates = baseDF$dates, breakFlow = baseDF$flow, eventPeak = max(chunk$flow, na.rm = TRUE))
           
-          kDF_$kVal <- signif(kDF_$breakFlow / kDF_$eventPeak)
-          
           chunkDaily <- chunk %>% 
             dplyr::group_by(Date) %>% 
             dplyr::summarize(dailyQ = mean(dailyQ), 
@@ -309,7 +307,9 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
           
           recessK <- 1 / recessK$coefficients[1]
           
-          kVal <- recessK
+          kVal_ <- recessK
+          
+          kDF_$kVal <- recessK
           
         }
         
@@ -320,16 +320,6 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
         kDF <- kDF[!duplicated(kDF$dates), ]
         
       }
-      
-      #thresholds <- quantile(kVal, probs = c(0.05, 0.95), na.rm = TRUE)
-      #
-      #kVal <- kVal[((kVal > thresholds[1]) + 0.01) == TRUE]
-      #
-      #kVal <- kVal[((kVal < thresholds[2]) - 0.01) == TRUE]
-      #
-      #kDF <- dplyr::filter(kDF, (kVal + 0.01) > thresholds[1] & (kVal - 0.01) < thresholds[2])
-      #
-      #kVal <- na.omit(kVal)
       
       if (getDF == FALSE) {
         
