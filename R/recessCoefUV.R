@@ -109,7 +109,7 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = TRUE,
       eventNums <- unique(testDFEvents$eventVal)
       
       retVal <- data.frame(siteID = NA, dates = as.POSIXct("1970-01-01, 00:00:00"), eventPeak = NA, 
-                           recessCoefGW1 = NA, storDepGW1 = NA, recessCoefGW2 = NA, storDepGW1 = NA)
+                           recessCoefGW1 = NA, storDepGW1 = NA, recessCoefGW2 = NA, storDepGW2 = NA)
       
       for (i in seq(1, length(eventNums), 1)) {
         
@@ -176,67 +176,97 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = TRUE,
             dplyr::filter(between(row_number(), which.max(flow), n())) %>% 
             data.frame()
           
-          chunkGAM <- gam(percDiff ~ s(log10(flow), k = (nrow(chunkDaily) - 1)), data = chunkDaily)
+          gamKnots <- ifelse(nrow(chunkDaily) <= 5, 1, 5)
           
-          fallChunk <- fallChunk %>% 
-            dplyr::mutate(percDiff = as.numeric(predict(chunkGAM, fallChunk))) %>% 
-            dplyr::mutate(bFlow = flow - (flow * percDiff)) %>% 
-            dplyr::mutate(runOff = flow - bFlow) %>% 
-            data.frame()
-          
-          runOffBP <- breakpoints(log(runOff) ~ 1, data = fallChunk, h = 4, breaks = 3)
-          
-          runOffBPDF <- fallChunk[runOffBP$breakpoints, ]
-          
-          # next step... convert daily means to uv time-series based on % diff between daily means and interpolation from max values
-          
-          chunkDailyEval <- chunkDaily %>% 
-            dplyr::summarize(maxBfiQ = max(bfiQ), 
-                             maxRunOffBfiQ = max(runOffBfiQ), 
-                             maxPartQ = max(partQ), 
-                             maxRunOffPartQ = max(runOffPartQ), 
-                             maxInterQ = max(interQ)) %>% 
-            data.frame()
-          
-          recessChunk <- fallChunk %>% 
-            dplyr::filter(dates >= runOffBPDF[3, 1]) %>% 
-            dplyr::mutate(diffTime = ((numDate / 3600) - lag(numDate / 3600, 1))) %>% 
-            dplyr::mutate(diffTime = ifelse(is.na(diffTime), 0, diffTime)) %>% 
-            dplyr::mutate(diffTime = cumsum(diffTime)) %>% 
-            dplyr::mutate(runOff = log(runOff)) %>% 
-            dplyr::mutate(bFlow = log(bFlow)) %>% 
-            #dplyr::top_n(-6) %>% 
-            data.frame()
-          
-          recessLmGW1 <- lm(runOff ~ diffTime, data = na.omit(recessChunk))
-          
-          recessCoefGW1 <- 1 / (recessLmGW1$coefficients[2] * -1)
-          
-          storDepGW1 <- ((exp(max(recessChunk$runOff, na.rm = TRUE))) / (3.9*27878400)) / (recessLmGW1$coefficients[2] * -1)
-          
-          recessLmGW2 <- lm(bFlow ~ diffTime, data = na.omit(recessChunk))
-          
-          recessCoefGW2 <- 1 / (recessLmGW2$coefficients[2] * -1)
-          
-          storDepGW2 <- ((exp(max(recessChunk$bFlow, na.rm = TRUE))) / (3.9*27878400)) / (recessLmGW2$coefficients[2] * -1)
-          
-          peakRow <- dplyr::slice(chunk, which.max(flow))
-          
-          if (nrow(peakRow) > 1) {
+          chunkGAM <- tryCatch({ 
             
-            peakRow <- peakRow[nrow(peakRow), ]
+            gam(percDiff ~ s(log10(flow), k = gamKnots), data = chunkDaily) 
+            
+            },
+            
+            error = function(cond) {
+              
+              "failure"
+              
+            })
+          
+          if (length(chunkGAM) == 1) {
+            
+            peakRow <- dplyr::slice(chunk, which.max(flow))
+            
+            if (nrow(peakRow) > 1) {
+              
+              peakRow <- peakRow[nrow(peakRow), ]
+              
+            }
+            
+            retVal_ <- data.frame(siteID = siteID, dates = peakRow$dates, eventPeak = peakRow$flow, 
+                                  recessCoefGW1 = NA, storDepGW1 = NA, 
+                                  recessCoefGW2 = NA, storDepGW2 = NA)
+            
+          } else {
+            
+            fallChunk <- fallChunk %>% 
+              dplyr::mutate(percDiff = as.numeric(predict(chunkGAM, fallChunk))) %>% 
+              dplyr::mutate(bFlow = flow - (flow * percDiff)) %>% 
+              dplyr::mutate(runOff = flow - bFlow) %>% 
+              data.frame()
+            
+            runOffBP <- breakpoints(log(runOff) ~ 1, data = fallChunk, h = 4, breaks = 3)
+            
+            runOffBPDF <- fallChunk[runOffBP$breakpoints, ]
+            
+            chunkDailyEval <- chunkDaily %>% 
+              dplyr::summarize(maxBfiQ = max(bfiQ), 
+                               maxRunOffBfiQ = max(runOffBfiQ), 
+                               maxPartQ = max(partQ), 
+                               maxRunOffPartQ = max(runOffPartQ), 
+                               maxInterQ = max(interQ)) %>% 
+              data.frame()
+            
+            recessChunk <- fallChunk %>% 
+              dplyr::filter(dates >= runOffBPDF[3, 1]) %>% 
+              dplyr::mutate(diffTime = ((numDate / 3600) - lag(numDate / 3600, 1))) %>% 
+              dplyr::mutate(diffTime = ifelse(is.na(diffTime), 0, diffTime)) %>% 
+              dplyr::mutate(diffTime = cumsum(diffTime)) %>% 
+              dplyr::mutate(runOff = log(runOff)) %>% 
+              dplyr::mutate(bFlow = log(bFlow)) %>% 
+              #dplyr::top_n(-6) %>% 
+              data.frame()
+            
+            recessLmGW1 <- lm(runOff ~ diffTime, data = na.omit(recessChunk))
+            
+            recessCoefGW1 <- 1 / (recessLmGW1$coefficients[2] * -1)
+            
+            storDepGW1 <- ((exp(max(recessChunk$runOff, na.rm = TRUE))) / (3.9*27878400)) / (recessLmGW1$coefficients[2] * -1)
+            
+            recessLmGW2 <- lm(bFlow ~ diffTime, data = na.omit(recessChunk))
+            
+            recessCoefGW2 <- 1 / (recessLmGW2$coefficients[2] * -1)
+            
+            storDepGW2 <- ((exp(max(recessChunk$bFlow, na.rm = TRUE))) / (3.9*27878400)) / (recessLmGW2$coefficients[2] * -1)
+            
+            peakRow <- dplyr::slice(chunk, which.max(flow))
+            
+            if (nrow(peakRow) > 1) {
+              
+              peakRow <- peakRow[nrow(peakRow), ]
+              
+            }
+            
+            retVal_ <- data.frame(siteID = siteID, dates = peakRow$dates, eventPeak = peakRow$flow, 
+                                  recessCoefGW1 = recessCoefGW1, storDepGW1 = storDepGW1, 
+                                  recessCoefGW2 = recessCoefGW2, storDepGW2 = storDepGW2)
             
           }
-          
-          retVal_ <- data.frame(siteID = siteID, dates = peakRow$dates, eventPeak = peakRow$flow, 
-                                recessCoefGW1 = recessCoefGW1, storDepGW1 = storDepGW1, 
-                                recessCoefGW2 = recessCoefGW2, storDepGW2 = storDepGW2)
           
         }
         
         retVal <- dplyr::bind_rows(retVal, retVal_)
         
       } 
+      
+      retVal <- retVal[-1, ]
       
       return(retVal)
     }
