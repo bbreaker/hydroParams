@@ -54,6 +54,7 @@ readPeakFQUSACEOut <- function(outFile) {
   if(nPILFs > 0) {
     PILFs <- newText[-c(1:grep(pattern = topOut4, newText))]
     PILFs <- PILFs[1:nPILFs]
+    PILFs <- gsub("[/*]", "", PILFs)
     PILFs <- read.table(text = PILFs, stringsAsFactors = FALSE)
     PILFs[, 5] <- gsub("[/)]", "", PILFs[, 5])
     PILFs[, 6] <- gsub("[/p=]", "", PILFs[, 6])
