@@ -51,7 +51,9 @@ readPeakFQUSACEOut <- function(outFile) {
   PILFs <- newText[grep(pattern = topOut4, newText)]
   spltPILFs <- length(unlist(stringr::str_split(PILFs, " ")))
   nPILFs <- as.numeric(unlist(stringr::str_split(PILFs, " "))[spltPILFs])
-  if(nPILFs > 0) {
+  if (length(nPILFs) == 0) {
+    newTbl3 <- newTbl3
+  } else if (nPILFs > 0) {
     PILFs <- newText[-c(1:grep(pattern = topOut4, newText))]
     PILFs <- PILFs[1:nPILFs]
     PILFs <- gsub("[/*]", "", PILFs)
@@ -66,6 +68,8 @@ readPeakFQUSACEOut <- function(outFile) {
       dplyr::mutate(hspp = as.numeric(hspp)) %>% 
       data.frame()
     newTbl3 <- dplyr::bind_rows(newTbl3, PILFs)
+  } else {
+    newTbl3 <- newTbl3
   }
   newList <- list()
   newList$info <- newTbl
