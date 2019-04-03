@@ -102,7 +102,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
         dplyr::mutate(mn = as.numeric(format(midDate, "%m")), yr = as.numeric(format(midDate, "%Y")), 
                       watYr = dplyr::if_else(mn >= 10, yr + 1, yr), 
                       startBaseQ = startBaseQ, endBaseQ = endBaseQ) %>% 
-        dplyr::select(nDays, pkFlow, volFlow, midDate, beginDate, endDate, mn, yr, watYr, startBaseQ, endBaseQ) %>% 
+        dplyr::select(nDays, pkFlow, volFlow, meanFlow, midDate, beginDate, endDate, mn, yr, watYr, startBaseQ, endBaseQ) %>% 
         data.frame() 
       
     }
