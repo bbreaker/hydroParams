@@ -50,7 +50,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
       
       retVal_ <- chunk %>% 
         dplyr::filter(diffLog == "event") %>% 
-        dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = sum(flow), 
+        dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = sum(flow), meanFlow = mean(flow), 
                          midDate = as.Date(median(date), format = "%Y-%m-%d"),
                          beginDate = as.Date(min(date), format = "%Y-%m-%d"), 
                          endDate = as.Date(max(date), format = "%Y-%m-%d")) %>% 
@@ -63,7 +63,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
       
       retVal_ <- chunk %>% 
         dplyr::filter(diffLog == "event") %>% 
-        dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = sum(flow), 
+        dplyr::summarize(nDays = n(), pkFlow = max(flow), volFlow = sum(flow), meanFlow = mean(flow), 
                          midDate = as.Date(median(date), format = "%Y-%m-%d"),
                          beginDate = as.Date(min(date), format = "%Y-%m-%d"), 
                          endDate = as.Date(max(date), format = "%Y-%m-%d")) %>% 
@@ -94,7 +94,7 @@ agDailyInflows <- function(dates, flows, drnArea, adjVal = NULL, daysLim = NULL)
       chunk <- chunk[testDF$first:testDF$last, ] 
       
       retVal_ <- chunk %>% 
-        dplyr::summarize(nDays = n(), volFlow = sum(flow), 
+        dplyr::summarize(nDays = n(), volFlow = sum(flow), meanFlow = mean(flow), 
                          midDate = as.Date(median(date), format = "%Y-%m-%d"), 
                          beginDate = as.Date(min(date), format = "%Y-%m-%d"), 
                          endDate = as.Date(max(date), format = "%Y-%m-%d")) %>% 
