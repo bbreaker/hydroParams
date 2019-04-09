@@ -34,6 +34,9 @@ readPeakFQUSACEOut <- function(outFile) {
       
       testTbl2Sub1 <- paste0(testTbl2Sub1, " NA ")
       newTbl2[i] <- paste0(testTbl2Sub1, testTbl2Sub2)
+    } else if (ncol(read.table(text = testTbl2)) == 6) {
+      testTbl2 <- paste(stringr::str_sub(testTbl2, 1, 67), stringr::str_sub(testTbl2, 68, 80))
+      newTbl2[i] <- newTbl2[i]
     } else {
       newTbl2[i] <- newTbl2[i]
     }
