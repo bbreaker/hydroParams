@@ -28,7 +28,7 @@ scrapeGagePages <- function(siteIds) {
     if (hold == "failure") {
       
       finDF <- data.frame(site_no = station, 
-                          statGrp = as.character(), 
+                          statGrp = "failed", 
                           stat = "failed",
                           val = 0,
                           unit = "failed", 
