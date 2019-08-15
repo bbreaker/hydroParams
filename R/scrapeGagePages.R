@@ -29,8 +29,8 @@ scrapeGagePages <- function(siteIds) {
       
       finDF <- data.frame(site_no = station, 
                           statGrp = "failed", 
-                          stat = "failed",
-                          val = 0,
+                          stat = "failed", 
+                          val = "failed", 
                           unit = "failed", 
                           stringsAsFactors = FALSE)
       
@@ -79,11 +79,11 @@ scrapeGagePages <- function(siteIds) {
                               stringsAsFactors = FALSE)
         }
         
-        results <- dplyr::bind_rows(results, finDF); rm(finDF)
-        
       }
       
     }
+    
+    results <- dplyr::bind_rows(results, finDF); rm(finDF)
     
   }
   
