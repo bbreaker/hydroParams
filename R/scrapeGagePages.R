@@ -34,6 +34,8 @@ scrapeGagePages <- function(siteIds) {
                           unit = "failed", 
                           stringsAsFactors = FALSE)
       
+      results <- dplyr::bind_rows(results, finDF); rm(finDF)
+      
     } else {
       
       for (j in 2:length(hold)) {
@@ -56,12 +58,13 @@ scrapeGagePages <- function(siteIds) {
       statHdrs <- if_else(holdTables$X1 == holdTables$X2, holdTables$X1, "notAHdr")
       statHdrs <- statHdrs[!grepl("notAHdr", statHdrs)]
       statHdrs <- statHdrs[nchar(statHdrs) > 0]
+      finDF <- data.frame()
       
       for (j in 1:length(statHdrs)) {
         if (j < length(statHdrs)) {
           holdRef <- holdTables[c(grep(statHdrs[j], holdTables$X1):grep(statHdrs[j + 1], holdTables$X1)), ]
           holdRef <- holdRef[-c(1, nrow(holdRef)), ]
-          finDF <- data.frame(site_no = station, 
+          finDF_ <- data.frame(site_no = station, 
                               statGrp = statHdrs[j], 
                               stat = holdRef$X1, 
                               val = holdRef$X2, 
@@ -71,7 +74,7 @@ scrapeGagePages <- function(siteIds) {
           holdRef <- holdTables[c(grep(statHdrs[j], holdTables$X1):nrow(holdTables)), ]
           holdRef <- holdRef[-1, ]
           holdRef <- holdRef[!(holdRef$X1 == ""), ]
-          finDF <- data.frame(site_no = station, 
+          finDF_ <- data.frame(site_no = station, 
                               statGrp = statHdrs[j], 
                               stat = holdRef$X1, 
                               val = holdRef$X2, 
@@ -79,11 +82,14 @@ scrapeGagePages <- function(siteIds) {
                               stringsAsFactors = FALSE)
         }
         
+        finDF <- dplyr::bind_rows(finDF, finDF_)
+        
       }
+      
+      results <- dplyr::bind_rows(results, finDF); rm(finDF)
       
     }
     
-    results <- dplyr::bind_rows(results, finDF); rm(finDF)
     
   }
   
