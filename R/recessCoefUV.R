@@ -30,8 +30,8 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = TRUE,
         dplyr::mutate(Date = as.Date(dates)) %>% 
         dplyr::group_by(Date) %>% 
         dplyr::summarize(dailyQ = mean(flow)) %>% 
-        dplyr::mutate(bfiQ = runBFI(dailyQ, Date)) %>% 
-        dplyr::mutate(runOffBfiQ = dailyQ - bfiQ) %>% 
+        #dplyr::mutate(bfiQ = runBFI(dailyQ, Date)) %>% 
+        #dplyr::mutate(runOffBfiQ = dailyQ - bfiQ) %>% 
         dplyr::mutate(partQ = runPART(dailyQ, Date, drnArea = drnArea)) %>% 
         dplyr::mutate(runOffPartQ = dailyQ - partQ) %>% 
         data.frame()
@@ -89,9 +89,9 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = TRUE,
       
       testDF <- dplyr::left_join(testDF, testRle, "cumVal")
       
-      if (is.na(testDF[1, 18])) {testDF[1, 18] <- 0}
+      if (is.na(testDF[1, 16])) {testDF[1, 16] <- 0}
       
-      if (is.na(testDF[nrow(testDF), 18])) {testDF[nrow(testDF), 18] <- max(testDF$eventVal, na.rm = TRUE)}
+      if (is.na(testDF[nrow(testDF), 16])) {testDF[nrow(testDF), 16] <- max(testDF$eventVal, na.rm = TRUE)}
       
       testDF$eventVal <- zoo::na.locf(testDF$eventVal, fromLast = TRUE)
       
@@ -156,16 +156,16 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = TRUE,
           chunkDaily <- chunk %>% 
             dplyr::group_by(Date) %>% 
             dplyr::summarize(flow = mean(dailyQ), 
-                             bfiQ = mean(bfiQ), 
-                             runOffBfiQ = mean(runOffBfiQ), 
+                             #bfiQ = mean(bfiQ), 
+                             #runOffBfiQ = mean(runOffBfiQ), 
                              partQ = mean(partQ), 
                              runOffPartQ = mean(runOffPartQ), 
                              interQ = mean(interQ)) %>% 
             dplyr::mutate(numDate = as.numeric(Date)) %>%  
-            dplyr::mutate(slopeBfiQ = c(NA, diff(log10(bfiQ)) / diff(numDate)), 
-                          absSlopeBfiQ = abs(slopeBfiQ)) %>%  
-            dplyr::mutate(slopeRunOffBfiQ = c(NA, diff(log10(runOffBfiQ)) / diff(numDate)), 
-                          absSlopeRunOffBfiQ = abs(slopeRunOffBfiQ)) %>%  
+            #dplyr::mutate(slopeBfiQ = c(NA, diff(log10(bfiQ)) / diff(numDate)), 
+            #              absSlopeBfiQ = abs(slopeBfiQ)) %>%  
+            #dplyr::mutate(slopeRunOffBfiQ = c(NA, diff(log10(runOffBfiQ)) / diff(numDate)), 
+            #              absSlopeRunOffBfiQ = abs(slopeRunOffBfiQ)) %>%  
             dplyr::mutate(slopePartQ = c(NA, diff(log10(partQ)) / diff(numDate)), 
                           absSlopePartQ = abs(slopePartQ)) %>%  
             dplyr::mutate(slopeRunOffPartQ = c(NA, diff(log10(runOffPartQ)) / diff(numDate)), 
@@ -217,8 +217,8 @@ recessCoefUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = TRUE,
             runOffBPDF <- fallChunk[runOffBP$breakpoints, ]
             
             chunkDailyEval <- chunkDaily %>% 
-              dplyr::summarize(maxBfiQ = max(bfiQ), 
-                               maxRunOffBfiQ = max(runOffBfiQ), 
+              dplyr::summarize(#maxBfiQ = max(bfiQ), 
+                               #maxRunOffBfiQ = max(runOffBfiQ), 
                                maxPartQ = max(partQ), 
                                maxRunOffPartQ = max(runOffPartQ), 
                                maxInterQ = max(interQ)) %>% 
