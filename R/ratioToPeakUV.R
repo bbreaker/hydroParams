@@ -92,7 +92,7 @@ ratioToPeakUV <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = F
       
       testLm <- tryCatch({ 
         
-        lm(slope ~ numTime, data = fallChunk) 
+        glm(slope ~ numTime, data = fallChunk) 
         
         },
         
@@ -116,7 +116,7 @@ ratioToPeakUV <- function(flow, dates, nDays = 0.5, eventProb = 0.998, getDF = F
       
       testLm2 <- tryCatch({ 
         
-        lm(flow ~ numTime, data = fallChunk) 
+        glm(flow ~ numTime, data = fallChunk) 
         
       },
       
