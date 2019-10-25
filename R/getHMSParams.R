@@ -1,16 +1,16 @@
 getHMSParams <- function(basinFile, type) {
   endRf <- "End:"
   typeRf <- paste0(type, ": ")
-  findSbBsn <- stringr::str_detect(basinFile, sbBsnRf)
+  findType <- stringr::str_detect(basinFile, typeRf)
   findEndRf <- stringr::str_detect(basinFile, endRf)
-  bsnFlSbBsn <- which(findSbBsn == TRUE)
+  bsnFlType <- which(findType == TRUE)
   bsnFlEndRf <- which(findEndRf == TRUE)
   refDF <- data.frame()
-  for (i in 1:length(bsnFlSbBsn)) {
-    bsnFlSbBsnTst <- bsnFlSbBsn[i] 
-    bsnFlEndRfSub <- bsnFlEndRf[which(bsnFlEndRf > bsnFlSbBsnTst)]
+  for (i in 1:length(bsnFlType)) {
+    bsnFlTypeTst <- bsnFlType[i] 
+    bsnFlEndRfSub <- bsnFlEndRf[which(bsnFlEndRf > bsnFlTypeTst)]
     bsnFlEndRfSub <- bsnFlEndRfSub[1]
-    refDFSub <- basinFile[bsnFlSbBsnTst:bsnFlEndRfSub]
+    refDFSub <- basinFile[bsnFlTypeTst:bsnFlEndRfSub]
     refDFWide <- data.frame(fileN = 1)
     for (j in 1:length(refDFSub)) {
       refDFWide_ <- data.frame(val = (unlist(stringr::str_split(refDFSub[j], pattern = ": "))[2]), 
