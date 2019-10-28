@@ -1,4 +1,5 @@
 getHMSParams <- function(basinFile, type) {
+  basinFile <- readLines(basinFile)
   endRf <- "End:"
   typeRf <- paste0(type, ": ")
   findType <- stringr::str_detect(basinFile, typeRf)
