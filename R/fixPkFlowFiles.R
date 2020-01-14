@@ -24,7 +24,7 @@ fixPkFlowFiles <- function(pkFile) {
                   gage_ht = as.numeric(gage_ht)) %>% 
     ungroup() %>% 
     dplyr::mutate(watYr = as.numeric(watYr)) %>% 
-    dplyr::select(peak_dt, pkFlow, peak_cd, gage_ht, watYr) %>% 
+    dplyr::select(peak_dt, pkFlow, peak_cd, gage_ht, watYr, isApproxDate) %>% 
     data.frame()
   
   return(pkFile)
