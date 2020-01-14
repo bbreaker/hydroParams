@@ -1,5 +1,11 @@
 fixPkFlowFiles <- function(pkFile) {
   
+  pkFile$isApproxDate <- if_else(stringr::str_sub(pkFile$peak_dt, start = 9, end = 10) == "00", 
+                                 "yes", "no")
+  
+  pkFile$isApproxDate <- if_else(stringr::str_sub(pkFile$peak_dt, start = 6, end = 7) == "00", 
+                                 "yes", "no")
+  
   pkFile$peak_dt <- if_else(stringr::str_sub(pkFile$peak_dt, start = 9, end = 10) == "00", 
                             paste0(stringr::str_sub(pkFile$peak_dt, 1, 8), "01"), pkFile$peak_dt) 
   
