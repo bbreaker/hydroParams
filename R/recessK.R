@@ -6,7 +6,7 @@ moveAve <- function(series, numDays) {
   
 }
 
-recessKUV <- function(flow, dates, eventProb = 0.99, getDF = FALSE, siteID = NULL, drnArea = NULL) {
+recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, siteID = NULL, drnArea = NULL) {
   
   library(dplyr, quietly = TRUE)
   library(zoo, quietly = TRUE)
