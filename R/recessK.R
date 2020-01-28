@@ -30,8 +30,8 @@ recessKUV <- function(flow, dates, eventProb = 0.99, getDF = FALSE, siteID = NUL
         dplyr::mutate(Date = as.Date(dates)) %>% 
         dplyr::group_by(Date) %>% 
         dplyr::summarize(dailyQ = mean(flow, na.rm = TRUE)) %>% 
-        dplyr::mutate(bfiQ = runBFI(dailyQ, Date)) %>% 
-        dplyr::mutate(runOffBfiQ = dailyQ - bfiQ) %>% 
+        #dplyr::mutate(bfiQ = runBFI(dailyQ, Date)) %>% 
+        #dplyr::mutate(runOffBfiQ = dailyQ - bfiQ) %>% 
         dplyr::mutate(partQ = runPART(dailyQ, Date, drnArea = drnArea)) %>% 
         dplyr::mutate(runOffPartQ = dailyQ - partQ) %>% 
         data.frame()
@@ -269,16 +269,16 @@ recessKUV <- function(flow, dates, eventProb = 0.99, getDF = FALSE, siteID = NUL
           chunkDaily <- chunk %>% 
             dplyr::group_by(Date) %>% 
             dplyr::summarize(dailyQ = mean(dailyQ), 
-                             bfiQ = mean(bfiQ), 
-                             runOffBfiQ = mean(runOffBfiQ), 
+                             #bfiQ = mean(bfiQ), 
+                             #runOffBfiQ = mean(runOffBfiQ), 
                              partQ = mean(partQ), 
                              runOffPartQ = mean(runOffPartQ), 
                              interQ = mean(interQ)) %>% 
             dplyr::mutate(numDate = as.numeric(Date)) %>%  
-            dplyr::mutate(slopeBfiQ = c(NA, diff(log10(bfiQ)) / diff(numDate)), 
-                          absSlopeBfiQ = abs(slopeBfiQ)) %>%  
-            dplyr::mutate(slopeRunOffBfiQ = c(NA, diff(log10(runOffBfiQ)) / diff(numDate)), 
-                          absSlopeRunOffBfiQ = abs(slopeRunOffBfiQ)) %>%  
+            #dplyr::mutate(slopeBfiQ = c(NA, diff(log10(bfiQ)) / diff(numDate)), 
+            #              absSlopeBfiQ = abs(slopeBfiQ)) %>%  
+            #dplyr::mutate(slopeRunOffBfiQ = c(NA, diff(log10(runOffBfiQ)) / diff(numDate)), 
+            #              absSlopeRunOffBfiQ = abs(slopeRunOffBfiQ)) %>%  
             dplyr::mutate(slopePartQ = c(NA, diff(log10(partQ)) / diff(numDate)), 
                           absSlopePartQ = abs(slopePartQ)) %>%  
             dplyr::mutate(slopeRunOffPartQ = c(NA, diff(log10(runOffPartQ)) / diff(numDate)), 
@@ -288,8 +288,8 @@ recessKUV <- function(flow, dates, eventProb = 0.99, getDF = FALSE, siteID = NUL
             data.frame()
           
           chunkDailyEval <- chunkDaily %>% 
-            dplyr::summarize(maxBfiQ = max(bfiQ), 
-                             maxRunOffBfiQ = max(runOffBfiQ), 
+            dplyr::summarize(#maxBfiQ = max(bfiQ), 
+                             #maxRunOffBfiQ = max(runOffBfiQ), 
                              maxPartQ = max(partQ), 
                              maxRunOffPartQ = max(runOffPartQ), 
                              maxInterQ = max(interQ)) %>% 
