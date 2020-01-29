@@ -11,6 +11,7 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
   library(dplyr, quietly = TRUE)
   library(zoo, quietly = TRUE)
   library(segmented, quietly = TRUE)
+  library(mgcv, quietly = TRUE)
   
   if (any(is.na(flow))) {
     
@@ -30,8 +31,6 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
         dplyr::mutate(Date = as.Date(dates)) %>% 
         dplyr::group_by(Date) %>% 
         dplyr::summarize(dailyQ = mean(flow, na.rm = TRUE)) %>% 
-        #dplyr::mutate(bfiQ = runBFI(dailyQ, Date)) %>% 
-        #dplyr::mutate(runOffBfiQ = dailyQ - bfiQ) %>% 
         dplyr::mutate(partQ = runPART(dailyQ, Date, drnArea = drnArea)) %>% 
         dplyr::mutate(runOffPartQ = dailyQ - partQ) %>% 
         data.frame()
@@ -47,8 +46,6 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
       
       testDFDailyInterQ$interQ <- runPART(flow = testDFDailyInterQ$runOffQ, dates = testDFDailyInterQ$Date, 
                                           drnArea = (drnArea * drnAreaAdj))
-      
-      #testDFDailyInterQ$interQ <- runBFI(flow = testDFDailyInterQ$runOffQ, dates = testDFDailyInterQ$Date)
       
       testDFDailyInterQ <- testDFDailyInterQ[, c(1, 3)]
       
@@ -89,9 +86,9 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
       
       testDF <- dplyr::left_join(testDF, testRle, "cumVal")
       
-      if (is.na(testDF[1, 18])) {testDF[1, 18] <- 0}
+      if (is.na(testDF[1, 16])) {testDF[1, 16] <- 0}
       
-      if (is.na(testDF[nrow(testDF), 18])) {testDF[nrow(testDF), 18] <- max(testDF$eventVal, na.rm = TRUE)}
+      if (is.na(testDF[nrow(testDF), 16])) {testDF[nrow(testDF), 16] <- max(testDF$eventVal, na.rm = TRUE)}
       
       testDF$eventVal <- na.locf(testDF$eventVal, fromLast = TRUE)
       
@@ -110,8 +107,7 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
       
       kVal <- as.numeric()
       
-      kDF <- data.frame(dates = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
-                        eventPeak = NA, kVal = NA)
+      kDF <- data.frame()
       
       for (i in seq(1, length(eventNums), 1)) {
         
@@ -127,33 +123,9 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
         
         fallChunk$numTime <- as.numeric(fallChunk$dates)
         
-        testLm <- tryCatch({ 
-          
-          lm(slope ~ numTime, data = fallChunk) 
-          
-        },
-        
-        error = function(cond) {
-          
-          "failure"
-          
-        })
-        
-        testSeg <- tryCatch({ 
-          
-          segmented(testLm) 
-          
-        }, 
-        
-        error = function(cond) { 
-          
-          "failure" 
-          
-        })
-        
         testLm2 <- tryCatch({ 
           
-          lm(flow ~ numTime, data = fallChunk) 
+          glm(log10(flow) ~ numTime, data = fallChunk) 
           
         },
         
@@ -175,150 +147,41 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
           
         })
         
-        if (length(testSeg) == 1 & length(testSeg2) == 1) {
+        if (length(testSeg2) == 1) {
           
           kVal_ <- NA
           
-          kDF_ <- data.frame(dates = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
-                             eventPeak = NA, kVal = NA)
-          
-        } else if (length(testSeg) != 1 & length(testSeg2) == 1) {
-          
-          breakDate <- as.POSIXct(summary.segmented(testSeg)$psi[1, 2], 
-                                  origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                  tz = attr(testDF$dates, "tzone"))
-          
-          breakDate <- lubridate::round_date(breakDate, unit = "15 minute")
-          
-          baseDF <- fallChunk[which(fallChunk$dates == breakDate), ]
-          
-          baseDF <- baseDF[, c(1, 2)] 
-          
-          nRowVal <- round(nrow(baseDF) / 2, 0)
-          
-          nRowVal <- ifelse(nRowVal == 0, 1, nRowVal)
-          
-          baseDF <- baseDF[nRowVal, ]
-          
-        } else if (length(testSeg) == 1 & length(testSeg2) != 1) {
-          
-          breakDate2 <- as.POSIXct(summary.segmented(testSeg2)$psi[1, 2], 
-                                   origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                   tz = attr(testDF$dates, "tzone"))
-          
-          breakDate2 <- lubridate::round_date(breakDate2, unit = "15 minute")
-          
-          baseDF <- fallChunk[which(fallChunk$dates == breakDate2), ]
-          
-          baseDF <- baseDF[, c(1, 2)] 
-          
-          nRowVal <- round(nrow(baseDF) / 2, 0)
-          
-          nRowVal <- ifelse(nRowVal == 0, 1, nRowVal)
-          
-          baseDF <- baseDF[nRowVal, ]
+          kDF_ <- data.frame(peakDate = as.POSIXct("1970-01-01, 00:00:00"), peakFlow = NA, 
+                             breakDate = as.POSIXct("1970-01-01, 00:00:00"), breakFlow = NA, 
+                             recessK = NA)
           
         } else {
           
-          breakDate <- as.POSIXct(summary.segmented(testSeg)$psi[1, 2], 
-                                  origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                  tz = attr(testDF$dates, "tzone"))
-          
           breakDate2 <- as.POSIXct(summary.segmented(testSeg2)$psi[1, 2], 
                                    origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
                                    tz = attr(testDF$dates, "tzone"))
           
-          if (abs(difftime(breakDate, breakDate2, units = "mins")) < 15) {
-            
-            #breakDates <- as.POSIXct(min(c(breakDate, breakDate2)), 
-            #                         origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-            #                         tz = attr(testDF$dates, "tzone"))
-            
-            breakDates <- as.POSIXct(round(as.double(breakDate) / (15*60)) * (15*60), 
-                                     origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                     tz = attr(testDF$dates, "tzone"))
-            
-            baseDF <- fallChunk[which(fallChunk$dates >= breakDates), ]
-            
-            baseDF <- baseDF[1, ]
-            
-          } else {
-            
-            breakDates <- data.frame(dates = as.POSIXct("1970-01-01 00:00:00", 
-                                                        origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
-                                                        tz = attr(testDF$dates, "tzone")))
-            
-            breakDates[2, 1] <- breakDate; breakDates[3, 1] <- breakDate2; breakDates <- breakDates[-1, ]
-            
-            baseDF <- fallChunk[which(fallChunk$dates >= min(breakDates) & fallChunk$dates <= max(breakDates)), ]
-            
-            baseDF <- baseDF[, c(1, 2)] 
-            
-            nRowVal <- round(nrow(baseDF) / 2, 0)
-            
-            nRowVal <- ifelse(nRowVal == 0, 1, nRowVal)
-            
-            baseDF <- baseDF[nRowVal, ]
-            
-          }
-          
-          kVal_ <- signif(baseDF$flow / max(chunk$flow, na.rm = TRUE), 2)
-          
-          kDF_ <- data.frame(dates = baseDF$dates, breakFlow = baseDF$flow, eventPeak = max(chunk$flow, na.rm = TRUE))
-          
-          chunkDaily <- chunk %>% 
-            dplyr::group_by(Date) %>% 
-            dplyr::summarize(dailyQ = mean(dailyQ), 
-                             #bfiQ = mean(bfiQ), 
-                             #runOffBfiQ = mean(runOffBfiQ), 
-                             partQ = mean(partQ), 
-                             runOffPartQ = mean(runOffPartQ), 
-                             interQ = mean(interQ)) %>% 
-            dplyr::mutate(numDate = as.numeric(Date)) %>%  
-            #dplyr::mutate(slopeBfiQ = c(NA, diff(log10(bfiQ)) / diff(numDate)), 
-            #              absSlopeBfiQ = abs(slopeBfiQ)) %>%  
-            #dplyr::mutate(slopeRunOffBfiQ = c(NA, diff(log10(runOffBfiQ)) / diff(numDate)), 
-            #              absSlopeRunOffBfiQ = abs(slopeRunOffBfiQ)) %>%  
-            dplyr::mutate(slopePartQ = c(NA, diff(log10(partQ)) / diff(numDate)), 
-                          absSlopePartQ = abs(slopePartQ)) %>%  
-            dplyr::mutate(slopeRunOffPartQ = c(NA, diff(log10(runOffPartQ)) / diff(numDate)), 
-                          absSlopeRunOffPartQ = abs(slopeRunOffPartQ)) %>% 
-            dplyr::mutate(slopeInterQ = c(NA, diff(log10(interQ)) / diff(numDate)), 
-                          absSlopeInterQ = abs(slopeInterQ)) %>% 
-            data.frame()
-          
-          chunkDailyEval <- chunkDaily %>% 
-            dplyr::summarize(#maxBfiQ = max(bfiQ), 
-                             #maxRunOffBfiQ = max(runOffBfiQ), 
-                             maxPartQ = max(partQ), 
-                             maxRunOffPartQ = max(runOffPartQ), 
-                             maxInterQ = max(interQ)) %>% 
-            data.frame()
-          
-          recessChunk <- fallChunk %>% 
-            dplyr::filter(dates >= baseDF$dates) %>% 
-            dplyr::mutate(diffTime = ((numDate / 3600) - lag(numDate / 3600, 1))) %>% 
-            dplyr::mutate(diffTime = ifelse(is.na(diffTime), 0, diffTime)) %>% 
-            dplyr::mutate(diffTime = cumsum(diffTime)) %>% 
-            dplyr::top_n(-6) %>% 
-            data.frame()
-          
-          recessK <- lm(diffTime ~ log10(flow), data = recessChunk)
-          
-          recessK <- 1 / recessK$coefficients[1]
-          
-          kVal_ <- recessK
-          
-          kDF_$kVal <- recessK
+          baseDF <- fallChunk[which(fallChunk$dates > breakDate2), ]
           
         }
         
-        kVal <- c(kVal, kVal_)
+        baseDF$numHours <- (baseDF$numTime / 60) / 60 
         
-        kDF <- dplyr::bind_rows(kDF, kDF_)
+        recessK1 <- lm(log10(flow) ~ numHours, data = baseDF) 
         
-        kDF <- kDF[!duplicated(kDF$dates), ]
+        recessK <- -1 * recessK1$coefficients[2] 
         
+        kVal_ <- recessK 
+        
+        kDF_ <- data.frame(peakDate = fallChunk[1, 1], peakFlow = fallChunk[1, 2], 
+                           breakDate = baseDF[1, 1], breakFlow = baseDF[1, 2], 
+                           recessK = recessK) 
+        
+        kVal <- c(kVal, kVal_) 
+        
+        kDF <- dplyr::bind_rows(kDF, kDF_) 
+          
+        }
       }
       
       if (getDF == FALSE) {
@@ -348,14 +211,9 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
           
           retVal$siteID <- siteID
           
-          retVal <- retVal[, c(5, 1:4)]
-          
         }
-        
       }
-      
     }
-      
   }
   
   return(retVal)
