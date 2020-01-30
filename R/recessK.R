@@ -212,8 +212,9 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
           retVal$siteID <- siteID
           
         }
+        
       }
-    }
+    
   }
   
   return(retVal)
