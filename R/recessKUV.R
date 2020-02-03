@@ -161,20 +161,27 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
                                    origin = as.POSIXct("1970-01-01", tz = attr(testDF$dates, "tzone")), 
                                    tz = attr(testDF$dates, "tzone"))
           
-          baseDF <- fallChunk[which(fallChunk$dates > breakDate2), ]
+          endDate <- breakDate2 + lubridate::days(1)
+          
+          #baseDF <- fallChunk[which(fallChunk$dates > breakDate2), ]
+          
+          baseDF <- dplyr::filter(fallChunk, dplyr::between(dates, breakDate2, endDate))
           
         }
         
-        baseDF$numHours <- (baseDF$numTime / 60) / 60 
+        #baseDF$numHours <- (baseDF$numTime / 60) / 60 
         
-        recessK1 <- lm(log10(flow) ~ numHours, data = baseDF) 
+        #recessK1 <- lm(log10(flow) ~ numHours, data = baseDF) 
         
-        recessK <- -1 * recessK1$coefficients[2] 
+        #recessK <- -1 * recessK1$coefficients[2] 
+        
+        recessK <- baseDF[nrow(baseDF), 2] / baseDF[1, 2]
         
         kVal_ <- recessK 
         
         kDF_ <- data.frame(peakDate = fallChunk[1, 1], peakFlow = fallChunk[1, 2], 
                            breakDate = baseDF[1, 1], breakFlow = baseDF[1, 2], 
+                           breakPlus24Date = baseDF[nrow(baseDF), 1], breakPlus24Flow[nrow(baseDF), 2], 
                            recessK = recessK) 
         
         kVal <- c(kVal, kVal_) 
