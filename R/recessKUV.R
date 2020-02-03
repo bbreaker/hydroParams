@@ -181,7 +181,7 @@ recessKUV <- function(flow, dates, nDays = 1, eventProb = 0.99, getDF = FALSE, s
         
         kDF_ <- data.frame(peakDate = fallChunk[1, 1], peakFlow = fallChunk[1, 2], 
                            breakDate = baseDF[1, 1], breakFlow = baseDF[1, 2], 
-                           breakPlus24Date = baseDF[nrow(baseDF), 1], breakPlus24Flow[nrow(baseDF), 2], 
+                           breakPlus24Date = baseDF[nrow(baseDF), 1], breakPlus24Flow = baseDF[nrow(baseDF), 2], 
                            recessK = recessK) 
         
         kVal <- c(kVal, kVal_) 
