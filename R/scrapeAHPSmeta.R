@@ -66,8 +66,8 @@ scrapeAHPSmeta <- function(localName, altName = NULL) {
 
     }
     
-    return(finList)
-    
   }
+  
+  return(finList)
   
 }
