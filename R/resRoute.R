@@ -3,7 +3,7 @@ resRoute <- function (inflow, geometry, initStor, initDisch = NA, sim, unitMmt =
   storElevCurve <- geometry$storElevCurve
   
   if (unitMmt == "si") {
-    storElevCurve$s <- storElevCurve$s * 1233.48
+    storElevCurve$s <- storElevCurve$s * 0.00123348
   } else if (unitMmt == "metric") {
     storElevCurve$s <- storElevCurve$s
   }
@@ -17,7 +17,7 @@ resRoute <- function (inflow, geometry, initStor, initDisch = NA, sim, unitMmt =
   }
   
   if (unitMmt == "si") {
-    capacity <- geometry$capacity * 1233.48
+    capacity <- geometry$capacity * 0.00123348
   } else if (unitMmt == "metric") {
     capacity <- geometry$capacity
   }
@@ -157,7 +157,7 @@ resRoute <- function (inflow, geometry, initStor, initDisch = NA, sim, unitMmt =
   mat$ts <- sim$simSteps
   
   if (unitMmt == "si") {
-    cap <- cap * (1 / 1233.48)
+    cap <- cap * (1 / 0.00123348)
   } else if (unitMmt == "metric") {
     cap <- cap
   }
