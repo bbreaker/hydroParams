@@ -52,6 +52,10 @@ resRoute <- function (inflow, geometry, initStor, initDisch = NA, sim, unitMmt =
   
   if (is.na(initStor)) {
     initStor <- capacity
+  } else if (unitMmt == "si") {
+    initStor <- initStor * 0.00123348
+  } else if (unitMmt == "metric") {
+    initStor <- initStor
   }
     
   if (initStor < capacity) {
