@@ -60,11 +60,11 @@ scrapeAHPSforecast <- function(localName, altName = NA) {
           dplyr::slice(-1, -2) %>% 
           dplyr::mutate(date = stringr::str_sub(X1, 1, 5), 
                         time = stringr::str_sub(X1, 7, 11), 
-                        datetime = paste0(date, "/19 ", time)) %>% 
+                        datetime = paste0(date, "/", format(Sys.Date(), "%Y"), time)) %>% 
           dplyr::mutate(localName = station, 
                         altName = altStation, 
                         groupName = "forecast", 
-                        datetime = as.POSIXct(datetime, format = "%m/%d/%y %H:%M", tz = "GMT"))
+                        datetime = as.POSIXct(datetime, format = "%m/%d/%Y %H:%M", tz = "GMT"))
         
         fCastStageN <- as.numeric(str_remove(holdFcast1$X2, "[aA-zZ]+"))
         
@@ -83,11 +83,11 @@ scrapeAHPSforecast <- function(localName, altName = NA) {
           dplyr::slice(-1) %>% 
           dplyr::mutate(date = stringr::str_sub(X1, 1, 5), 
                         time = stringr::str_sub(X1, 7, 11), 
-                        datetime = paste0(date, "/19 ", time)) %>% 
+                        datetime = paste0(date, "/", format(Sys.Date(), "%Y"), time)) %>% 
           dplyr::mutate(localName = station, 
                         altName = altStation, 
                         groupName = "observed", 
-                        datetime = as.POSIXct(datetime, format = "%m/%d/%y %H:%M", tz = "GMT"))
+                        datetime = as.POSIXct(datetime, format = "%m/%d/%Y %H:%M", tz = "GMT"))
         
         obsStageN <- as.numeric(str_remove(holdObs1$X2, "[aA-zZ]+"))
         
@@ -118,11 +118,11 @@ scrapeAHPSforecast <- function(localName, altName = NA) {
           dplyr::slice(-1) %>% 
           dplyr::mutate(date = stringr::str_sub(X1, 1, 5), 
                         time = stringr::str_sub(X1, 7, 11), 
-                        datetime = paste0(date, "/19 ", time)) %>% 
+                        datetime = paste0(date, "/", format(Sys.Date(), "%Y"), time)) %>% 
           dplyr::mutate(localName = station, 
                         altName = altStation, 
                         groupName = "forecast", 
-                        datetime = as.POSIXct(datetime, format = "%m/%d/%y %H:%M", tz = "GMT"))
+                        datetime = as.POSIXct(datetime, format = "%m/%d/%Y %H:%M", tz = "GMT"))
         
         fCastStageN <- as.numeric(str_remove(holdFcast1$X2, "[aA-zZ]+"))
         
@@ -149,11 +149,11 @@ scrapeAHPSforecast <- function(localName, altName = NA) {
           dplyr::slice(-1) %>% 
           dplyr::mutate(date = stringr::str_sub(X1, 1, 5), 
                         time = stringr::str_sub(X1, 7, 11), 
-                        datetime = paste0(date, "/19 ", time)) %>% 
+                        datetime = paste0(date, "/", format(Sys.Date(), "%Y"), time)) %>% 
           dplyr::mutate(localName = station, 
                         altName = altStation, 
                         groupName = "observed", 
-                        datetime = as.POSIXct(datetime, format = "%m/%d/%y %H:%M", tz = "GMT"))
+                        datetime = as.POSIXct(datetime, format = "%m/%d/%Y %H:%M", tz = "GMT"))
         
         obsStageN <- as.numeric(str_remove(holdObs1$X2, "[aA-zZ]+"))
         
@@ -180,7 +180,7 @@ scrapeAHPSforecast <- function(localName, altName = NA) {
         results <- rbind(results, finDF)
         
       }
-    
+      
     }
     
   }
