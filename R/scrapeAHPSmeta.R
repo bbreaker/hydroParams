@@ -32,7 +32,7 @@ scrapeAHPSmeta <- function(localName, altName = NULL) {
       
       finList[[1]] <- dplyr::bind_rows(finList[[1]], holdInfo[[1]])
       finList[[2]] <- dplyr::bind_rows(finList[[2]], holdInfo[[2]])
-
+      
     } else {
       
       holdTables <- hold %>%
@@ -45,7 +45,11 @@ scrapeAHPSmeta <- function(localName, altName = NULL) {
       
       dec_lat <- unlist(str_split_fixed(loc[1, 1], ": ", n = 2)) [2]
       
+      dec_lat <- as.numeric(gsub("° N", "", dec_lat))
+      
       dec_long <- unlist(str_split_fixed(loc[1, 2], ": ", n = 2)) [2]
+      
+      dec_long <- as.numeric(gsub("° W", "", dec_long))
       
       desc <- holdTables[4:8, 1]
       
@@ -54,7 +58,7 @@ scrapeAHPSmeta <- function(localName, altName = NULL) {
       flood <- holdTables[4:8, 3]
       
       explanation <- holdTables[4:8, 4]
-        
+      
       holdInfo <- list(location = data.frame(localName = localName[i], altName = ifelse(is.null(altName), NA, altName[i]), 
                                              dec_lat = dec_lat, dec_long = dec_long, stringsAsFactors = FALSE), 
                        datumInfo = data.frame(localName = localName[i], altName = ifelse(is.null(altName), NA, altName[i]), 
@@ -63,7 +67,7 @@ scrapeAHPSmeta <- function(localName, altName = NULL) {
       
       finList[[1]] <- dplyr::bind_rows(finList[[1]], holdInfo[[1]])
       finList[[2]] <- dplyr::bind_rows(finList[[2]], holdInfo[[2]])
-
+      
     }
     
   }
