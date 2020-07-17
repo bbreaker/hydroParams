@@ -1,10 +1,18 @@
-scrapeA14AMS <- function(url, writeResults = FALSE) {
+scrapeA14AMS <- function(url, asList = TRUE, writeResults = FALSE) {
   
   library(rvest)
   library(dplyr) 
   library(stringr)
   
-  finList <- list()
+  if (asList == TRUE) {
+    
+    finVal <- list()
+    
+  } else {
+    
+    finVal <- data.frame()
+    
+  }
   
   txtDat <- readLines(url)
   
@@ -42,11 +50,21 @@ scrapeA14AMS <- function(url, writeResults = FALSE) {
     
     datDF <- read.table(text = testDat[2:length(testDat)]) %>% 
       dplyr::rename(date = V1, val = V2) %>% 
-      dplyr::mutate(date = as.Date(date, format = "%m/%d/%Y"))
+      dplyr::mutate(date = as.Date(date, format = "%m/%d/%Y")) 
     
-    finList[[paste0(testDf$ref, "_info")]] <- testDf
-    
-    finList[[paste0(testDf$ref, "_dat")]] <- datDF
+    if (asList == TRUE) {
+      
+      finVal[[paste0(testDf$ref, "_info")]] <- testDf
+      
+      finVal[[paste0(testDf$ref, "_dat")]] <- datDF
+      
+    } else {
+      
+      finVal_ <- cbind(testDf, datDF)
+      
+      finVal <- dplyr::bind_rows(finVal, finVal_)
+      
+    }
     
     if (writeResults == TRUE) {
       
@@ -56,6 +74,6 @@ scrapeA14AMS <- function(url, writeResults = FALSE) {
     
   }
   
-  return(finList)
+  return(finVal)
   
 }
