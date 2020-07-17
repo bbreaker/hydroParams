@@ -1,4 +1,4 @@
-scrapeA14AMS <- function(url) {
+scrapeA14AMS <- function(url, writeResults = FALSE) {
   
   library(rvest)
   library(dplyr) 
@@ -47,6 +47,12 @@ scrapeA14AMS <- function(url) {
     finList[[paste0(testDf$ref, "_info")]] <- testDf
     
     finList[[paste0(testDf$ref, "_dat")]] <- datDF
+    
+    if (writeResults == TRUE) {
+      
+      write.csv(datDF, paste0(getwd(), "/", testDf$ref, ".csv"), row.names = FALSE)
+      
+    }
     
   }
   
