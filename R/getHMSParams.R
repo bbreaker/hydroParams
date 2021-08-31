@@ -56,7 +56,7 @@ getHMSParams <- function(basinFile, type) {
         if(nrow(refDFWide_) == 0) {
           refDFWide <- refDFWide
         } else {
-          refDFWide <- dplyr::bind_cols(refDFWide, refDFWide_)
+          refDFWide <- dplyr::bind_cols(refDFWide, refDFWide_, .name_repair = "minimal")
         }
         
       }
