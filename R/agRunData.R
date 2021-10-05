@@ -17,83 +17,35 @@ agRunData <- function(dssFile, pathKeep = NULL, pathDrop = NULL, makeList = FALS
     paths <- paths[!grepl(pathFilter, paths)]
   }
   
-  theTSC <- data.frame(getFullDT(dssFile, paths, discard_empty = FALSE))
-  
-  allPaths <- data.frame(feature = as.character(), val = as.character(), 
-                         date = as.character(), timeStep = as.character(), 
-                         run = as.character())
-  
-  for(i in 1:length(paths)) { 
-    if(stringr::str_split(paths[i], "/")[[1]][2] == "") {
-      newMat <- stringr::str_split_fixed(paths[i], "/", n = 8) 
-      newVec <- data.frame(t(newMat[1, which(nchar(newMat) > 0)]))
-    } else {
-      newMat <- stringr::str_split_fixed(paths[i], "/", n = 8) 
-      newVec <- data.frame(t(newMat[1, 3:7])) 
-    }
-    #newMat <- stringr::str_split_fixed(paths[i], "/", n = 8) 
-    #newVec <- data.frame(t(newMat[1, which(nchar(newMat) > 0)])) 
-    names(newVec) <- names(allPaths) 
-    allPaths <- dplyr::bind_rows(allPaths, newVec) 
-  }
-  
-  tStep <- regmatches(allPaths[1, 4], gregexpr("[[:digit:]]+", allPaths[1, 4]))
-  
-  tStep <- as.numeric(unlist(tStep))
-  
-  numInts <- as.numeric((difftime(max(theTSC$datetime), min(theTSC$datetime), 
-                                  units = "mins") / tStep) + 1)
-  
-  allPaths <- allPaths %>% 
-    dplyr::mutate(qualDF = paste(allPaths$feature, allPaths$val, sep = ":")) %>% 
+  pathsDF <- data.frame(unlist(stringr::str_split_fixed(paths, "/", n = 8))) %>% 
+    dplyr::group_by(X3, X4, X6, X7) %>% 
+    dplyr::slice(1) %>% 
     data.frame()
   
-  allPathsRLE <- data.frame(lengths = rle(allPaths$qualDF)[[1]], 
-                            values = rle(allPaths$qualDF)[[2]],
-                            stringsAsFactors = FALSE)
+  paths <- c()
   
-  qual <- unique(allPaths$qualDF)
-  
-  partVec <- c()
-  
-  paramVec <- c()
-  
-  theTSC$timeDff <- c(NA, diff(theTSC$datetime))
-  
-  theTSC$timeDff <- ifelse(theTSC$timeDff != 1 & theTSC$timeDff > 1, 1, theTSC$timeDff)
-  
-  timeRLE <- data.frame(lengths = rle(theTSC$timeDff)[[1]], 
-                        values = rle(theTSC$timeDff)[[2]],
-                        stringsAsFactors = FALSE)
-  
-  timeSum <- timeRLE %>% 
-    dplyr::mutate(indx = rep(1:length(qual), each = 2)) %>% 
-    dplyr::group_by(indx) %>% 
-    dplyr::summarize(nVals = sum(lengths))
-  
-  for(j in seq(1, length(qual), 1)) { 
-    qualVal <- qual[j] 
-    allPathsSub <- dplyr::filter(allPaths, qualDF == qualVal) 
-    partVec2 <- rep(allPathsSub[1, 1], timeSum[j, 2])
-    paramVec2 <- rep(allPathsSub[1, 2], timeSum[j, 2])
-    #if(nrow(allPathsSub) > 1) { 
-    #  partVec2 <- rep(allPathsSub[1, 1], numInts) 
-    #  paramVec2 <- rep(allPathsSub[1, 2], numInts)
-    #} else { 
-    #  partVec2 <- rep(allPathsSub[1, 1], numInts - 1)
-    #  paramVec2 <- rep(allPathsSub[1, 2], numInts - 1)
-    #}
-    partVec <- c(partVec, partVec2) 
-    paramVec <- c(paramVec, paramVec2)
+  for (i in 1:nrow(pathsDF)) {
+    paths_ <- pathsDF[i, ]
+    paths_ <- paste(paths_, collapse = '/')
+    paths <- c(paths, paths_)
+    rm(paths_)
   }
   
-  theTSC <- dplyr::select(theTSC, -timeDff)
+  paths <- paths[!grepl("FLOW-UNIT GRAPH", paths)]
   
-  theTSC$feature <- partVec
+  theTSC <- data.frame()
   
-  theTSC$param <- paramVec
+  for (i in 1:length(paths)) {
+    theTSC_ <- getTimeSeriesAsDataFrame(dssFile, paths[i])
+    thePathSub <- data.frame(unlist(stringr::str_split_fixed(paths[i], "/", n = 8)))
+    theTSC_ <- dplyr::bind_cols(theTSC_, thePathSub)
+    theTSC <- dplyr::bind_rows(theTSC, theTSC_)
+  }
   
-  #theTSC$run <- unique(allPaths$run)
+  theTSC <- theTSC %>% 
+    dplyr::select(X3, value, index, X6, X7, X4)
+  
+  names(theTSC) <- c("feature", "val", "date", "timeStep", "run", "param")
   
   if(makeList == TRUE) {
     theTSC$listVal <- paste(theTSC$feature, theTSC$param, sep = ":")
