@@ -1,4 +1,4 @@
-## This function takes a .basin file that has all of it's subbasins in either Normal Clark or 
+## This function takes a .basin file that has all of its subbasins in either Normal Clark or 
 ## variable Clark transforms and changes the transforms methods to variable Clark with the index
 ## values in the data frame 'varClarkDF' or updates the existing variable Clark index parameters
 ## with the index values in the data frame 'varClarkDF'. The data frame 'varClarkDF' consists of 
