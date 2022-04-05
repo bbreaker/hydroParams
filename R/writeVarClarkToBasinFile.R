@@ -2,7 +2,10 @@
 ## variable Clark transforms and changes the transforms methods to variable Clark with the index
 ## values in the data frame 'varClarkDF' or updates the existing variable Clark index parameters
 ## with the index values in the data frame 'varClarkDF'. The data frame 'varClarkDF' consists of 
-## 4 columns. The columns are 'subbasins', 'indexPrecip', 'tc', and 'r' and must be named appropriately.
+## 4 columns. The columns are 'Subbasin', 'indexPrecip', 'tc', and 'r' and must be named appropriately. 
+## Also, you should have a DSS file set up with the appropriate tables, as links will be created in 
+## the .basin files. If the subbasin name is 'theSubbasin', the link to the TC table will be 
+## 'theSubbasin_TC' and the link to the R table will be 'theSubbasin_R'. 
 
 addVarClark <- function(basinFile, varClarkDF) {
   
