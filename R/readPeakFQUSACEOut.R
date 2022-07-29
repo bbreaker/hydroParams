@@ -42,8 +42,9 @@ readPeakFQUSACEOut <- function(outFile) {
     }
   }
   newTbl2 <- read.table(text = newTbl2, stringsAsFactors = FALSE)
-  newTbl2 <- newTbl2[, -1]
-  names(newTbl2) <- c("AEP", "emaRegional", "variance", "emaStation", "lwr", "upr")
+  newTbl2 <- newTbl2[, -1] %>% 
+    dplyr::rename(AEP = 1, emaRegional = 2, variance = 3, emaStation = 4, lwr = 5, upr = 6) %>% 
+    dplyr::mutate(expected = signif((upr + lwr) / 2, 3))
   topOut3 <- "Year Plot Pos     Obs. Q      Fit Value Q      % Diff"
   newTbl3 <- newText[-c(1:grep(pattern = topOut3, newText))]
   newTbl3 <- newTbl3[-1]
