@@ -49,6 +49,12 @@ addVarClark <- function(basinFile, varClarkDF) {
     
     transformSub <- bsnFlSub[trnsfrmMthd:trnsfrmMthd_]
     
+    if (!stringr::str_detect(transformSub[1], "Clark")) {
+      
+      next
+      
+    }
+    
     clrkMthd <- transformSub[grepl("Clark Method:", transformSub)]
     
     sbbsnNm <- stringr::str_remove(bsnFlSub[1], "Subbasin: ")
