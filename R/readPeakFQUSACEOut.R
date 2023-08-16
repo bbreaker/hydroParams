@@ -1,5 +1,6 @@
 readPeakFQUSACEOut <- function(outFile) {
   newText <- readLines(outFile)
+  ## get data for inputs
   nPks <- "Total No. of Observations" 
   nPks <- newText[grep(pattern = nPks, newText)]
   spltPks <- length(unlist(stringr::str_split(nPks, " ")))
@@ -14,6 +15,7 @@ readPeakFQUSACEOut <- function(outFile) {
   skewOpt <- as.character(unlist(stringr::str_split(skewOpt, " "))[spltSkewOpt])
   newTbl <- data.frame(nPeaks = nPks, nPeaksUsed = nPksUsed, 
                        skewOption = skewOpt, stringsAsFactors = FALSE)
+  ## get fitted moments - mu, sigma, and gamma
   topOut1 <- "Fitted Log10 Moments"
   newTbl1 <- newText[-c(1:grep(pattern = topOut1, newText))]
   newTbl1 <- newTbl1[2:4]
@@ -22,6 +24,21 @@ readPeakFQUSACEOut <- function(outFile) {
   newTbl1[3] <- gsub("EMA w/Reg. Info & Spec. MSE", "GENERAL_EMA", newTbl1[3])
   newTbl1 <- read.table(text = newTbl1, stringsAsFactors = FALSE)
   names(newTbl1) <- c("type", "mu", "sigma", "gamma")
+  ## get MSE and skew info
+  topOut1_2 <- "Estimates & MSEs Corr. to Skew"
+  newTbl1_2 <- newText[-c(1:grep(pattern = topOut1_2, newText))]
+  newTbl1_2 <- newTbl1_2[1:9]
+  newTbl1_2[2] <- gsub("EMA Est. of G_atsite", "gamma_Est_EMA", newTbl1_2[2])
+  newTbl1_2[3] <- gsub("B17B Est. of MSE[G_atsite]", "MSE_Est_B17B", newTbl1_2[3], fixed = TRUE)
+  newTbl1_2[4] <- gsub("EMA (ADJE) Est. of MSE[G_atsite]", "EMA_Adje_Est_MSE", newTbl1_2[4], fixed = TRUE)
+  newTbl1_2[5] <- gsub("Regional G (G_reg)", "regional_gamma", newTbl1_2[5], fixed = TRUE)
+  newTbl1_2[6] <- gsub("MSE[G_reg]", "MSE_regional_gamma", newTbl1_2[6], fixed = TRUE)
+  newTbl1_2[7] <- gsub("Weighted G", "weighted_gamma", newTbl1_2[7])
+  newTbl1_2[8] <- gsub("MSE[G_atsite_systematic]", "MSE_atSite_Systematic", newTbl1_2[8], fixed = TRUE)
+  newTbl1_2[9] <- gsub("ERL[G_atsite]", "erl_gamma_atSite", newTbl1_2[9], fixed = TRUE)
+  newTbl1_2 <- read.table(text = newTbl1_2, stringsAsFactors = FALSE)
+  names(newTbl1_2) <- c("estimate_type", "value")
+  ## get frequency estimates
   topOut2 <- "EMA FREQUENCY ESTIMATES"
   newTbl2 <- newText[-c(1:grep(pattern = topOut2, newText))]
   newTbl2 <- newTbl2[6:46]
@@ -45,12 +62,14 @@ readPeakFQUSACEOut <- function(outFile) {
   newTbl2 <- newTbl2[, -1] %>% 
     dplyr::rename(AEP = 1, emaRegional = 2, variance = 3, emaStation = 4, lwr = 5, upr = 6) %>% 
     dplyr::mutate(expected = signif((upr + lwr) / 2, 3))
+  ## get EMA estimates of data
   topOut3 <- "Year Plot Pos     Obs. Q      Fit Value Q      % Diff"
   newTbl3 <- newText[-c(1:grep(pattern = topOut3, newText))]
   newTbl3 <- newTbl3[-1]
   newTbl3 <- read.table(text = newTbl3, stringsAsFactors = FALSE)
   names(newTbl3) <- c("watYr", "hspp", "obsPkFlow", "fitPkFlow", "percDiff")
   newTbl3$comment <- "Peak Used"
+  ## get outlier plotting positions
   topOut4 <- "Number of Low Outliers"
   PILFs <- newText[grep(pattern = topOut4, newText)]
   spltPILFs <- length(unlist(stringr::str_split(PILFs, " ")))
@@ -78,6 +97,7 @@ readPeakFQUSACEOut <- function(outFile) {
   newList <- list()
   newList$info <- newTbl
   newList$parms <- newTbl1
+  newList$mse <- newTbl1_2
   newList$estimates <- newTbl2
   newList$plotPositions <- newTbl3
   return(newList)
