@@ -28,16 +28,18 @@ readPeakFQUSACEOut <- function(outFile) {
   topOut1_2 <- "Estimates & MSEs Corr. to Skew"
   newTbl1_2 <- newText[-c(1:grep(pattern = topOut1_2, newText))]
   newTbl1_2 <- newTbl1_2[1:9]
+  col2Name <- gsub("Option", "", newTbl1_2[1])
   newTbl1_2[2] <- gsub("EMA Est. of G_atsite", "gamma_Est_EMA", newTbl1_2[2])
   newTbl1_2[3] <- gsub("B17B Est. of MSE[G_atsite]", "MSE_Est_B17B", newTbl1_2[3], fixed = TRUE)
-  newTbl1_2[4] <- gsub("EMA (ADJE) Est. of MSE[G_atsite]", "EMA_Adje_Est_MSE", newTbl1_2[4], fixed = TRUE)
+  stringr::str_sub(newTbl1_2[4], start = 16, end = 48) <- "EMA_Adje_Est_MSE"
+  newTbl1_2[4] <- gsub("EMA ADJE Est. of MSEG_atsite", "EMA_Adje_Est_MSE", newTbl1_2[4])
   newTbl1_2[5] <- gsub("Regional G (G_reg)", "regional_gamma", newTbl1_2[5], fixed = TRUE)
   newTbl1_2[6] <- gsub("MSE[G_reg]", "MSE_regional_gamma", newTbl1_2[6], fixed = TRUE)
   newTbl1_2[7] <- gsub("Weighted G", "weighted_gamma", newTbl1_2[7])
   newTbl1_2[8] <- gsub("MSE[G_atsite_systematic]", "MSE_atSite_Systematic", newTbl1_2[8], fixed = TRUE)
   newTbl1_2[9] <- gsub("ERL[G_atsite]", "erl_gamma_atSite", newTbl1_2[9], fixed = TRUE)
-  newTbl1_2 <- read.table(text = newTbl1_2, stringsAsFactors = FALSE)
-  names(newTbl1_2) <- c("estimate_type", "value")
+  newTbl1_2 <- read.table(text = newTbl1_2[2:9], stringsAsFactors = FALSE)
+  names(newTbl1_2) <- c("estimate_type", col2Name)
   ## get frequency estimates
   topOut2 <- "EMA FREQUENCY ESTIMATES"
   newTbl2 <- newText[-c(1:grep(pattern = topOut2, newText))]
