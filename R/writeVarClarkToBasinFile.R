@@ -7,7 +7,7 @@
 ## the .basin files. If the subbasin name is 'theSubbasin', the link to the TC table will be 
 ## 'theSubbasin_TC' and the link to the R table will be 'theSubbasin_R'. 
 
-addVarClark <- function(basinFile, varClarkDF) {
+addVarClark <- function(basinFile, varClarkDF, leaveOutSbbsns = NA) {
   
   #basinFile <- readLines(basinFile)
   
@@ -26,6 +26,18 @@ addVarClark <- function(basinFile, varClarkDF) {
   subbasinRfs <- which(findSubbasins == TRUE)
   
   bsnFlEndRf <- which(findEndRf == TRUE)
+  
+  tSbbsns <- basinFile[subbasinRfs]
+  
+  tSbbsns <- stringr::str_remove_all(tSbbsns, "Subbasin: ")
+  
+  if (!is.na(leaveOutSbbsns)) {
+    
+    tSubbasinRfs <- grepl(paste(leaveOutSbbsns, collapse = "|"), tSbbsns)
+    
+    subbasinRfs <- subbasinRfs[which(tSubbasinRfs == FALSE)]
+    
+  }
   
   for (i in 1:length(subbasinRfs)) {
     
@@ -115,3 +127,4 @@ addVarClark <- function(basinFile, varClarkDF) {
   return(basinFile)
   
 }
+
