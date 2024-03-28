@@ -3,8 +3,6 @@
 ## Leaving as only dealing with UTC for now. Might change this later.
 
 scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
-
-  library(stringr); library(jsonlite); library(dplyr); library(httr)
   
   if (is.null(endDate)) {
     
@@ -49,10 +47,18 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
     
   }
   
-  newDat <- data.frame(hold[[1]][[3]][[4]][[3]][[1]]) %>% 
-    dplyr::mutate(dateTime = as.POSIXct(X1, "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>% 
-    dplyr::rename(value = X2) %>% 
-    dplyr::select(dateTime, value)
+  if (length(hold$`time-series`$`time-series`) != 0) {
+    
+    newDat <- data.frame(hold[[1]][[3]][[4]][[3]][[1]]) %>% 
+      dplyr::mutate(dateTime = as.POSIXct(X1, "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>% 
+      dplyr::rename(value = X2) %>% 
+      dplyr::select(dateTime, value)
+    
+  } else {
+    
+    newDat <- "Something went wrong..."
+    
+  }
   
   return(newDat)
   
