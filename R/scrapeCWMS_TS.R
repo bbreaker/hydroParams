@@ -1,6 +1,3 @@
-cwmsRef <- read_csv("L:\\ENG Shared\\HH\\data\\cwmsRefSWL.csv") %>% 
-  data.frame()
-
 ## startDate and/or endDate should be a character object that resembles a POSIXct object... ie "2024-02-01 14:45:00"
 ## startDate must be specified, endDate can be left as NULL.
 ## Leaving as only dealing with UTC for now. Might change this later.
@@ -58,5 +55,3 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
   return(newDat)
   
 }
-
-test <- scrapeCWMS_TS(time_series_id = cwmsRef[85, 1], office = "SWL", startDate = "2023-09-01 00:00:00")
