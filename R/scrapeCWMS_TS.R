@@ -3,6 +3,8 @@
 ## Leaving as only dealing with UTC for now. Might change this later.
 
 scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
+
+  library(stringr); library(jsonlite); library(dplyr); library(httr)
   
   if (is.null(endDate)) {
     
