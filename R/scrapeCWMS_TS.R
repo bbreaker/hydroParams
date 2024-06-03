@@ -2,7 +2,8 @@
 ## startDate must be specified, endDate can be left as NULL.
 ## Leaving as only dealing with UTC for now. Might change this later.
 
-scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
+scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, 
+                          tStep = "irregular") {
   
   if (is.null(endDate)) {
     
@@ -47,12 +48,31 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
     
   }
   
-  if (length(hold$`time-series`$`time-series`) != 0) {
+  if (tStep == "irregular") {
     
     newDat <- data.frame(hold[[1]][[3]][[4]][[3]][[1]]) %>% 
       dplyr::mutate(dateTime = as.POSIXct(X1, "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>% 
       dplyr::rename(value = X2) %>% 
       dplyr::select(dateTime, value)
+    
+    
+    
+  } else if (tStep == "regular") {
+    
+    testIt <- hold$`time-series`$`time-series`[[4]]
+    
+    if (any(testIt == "Not enough memory for CONNECT BY operation")) {
+      
+      newDat <- "try shorter period"
+      
+    } else {
+      
+      newDat <- data.frame(index = seq(from = as.POSIXct(hold$`time-series`$`time-series`$`regular-interval-values`$segments[[1]]$`first-time`, "%Y-%m-%dT%H:%M:%S", tz = "UTC"), 
+                                       to = as.POSIXct(hold$`time-series`$`time-series`$`regular-interval-values`$segments[[1]]$`last-time`, "%Y-%m-%dT%H:%M:%S", tz = "UTC"), 
+                                       by = "1 hours")) %>% 
+        dplyr::mutate(value = hold$`time-series`$`time-series`$`regular-interval-values`$segments[[1]]$`values`[[1]][, 1])
+      
+    }
     
   } else {
     
