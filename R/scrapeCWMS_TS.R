@@ -5,7 +5,7 @@
 ## Right now, this function will really only work with daily and hourly... need to make it recognize 'regular' time-step intervals and create the datetime sequence appropriatly.
 
 scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, 
-                          tStep = "irregular") {
+                          dataType = "irregular") {
   
   if (is.null(endDate)) {
     
@@ -50,16 +50,14 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL,
     
   }
   
-  if (tStep == "irregular") {
+  if (dataType == "irregular") {
     
     newDat <- data.frame(hold[[1]][[3]][[4]][[3]][[1]]) %>% 
       dplyr::mutate(dateTime = as.POSIXct(X1, "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>% 
       dplyr::rename(value = X2) %>% 
       dplyr::select(dateTime, value)
     
-    
-    
-  } else if (tStep == "regular") {
+  } else if (dataType == "regular") {
     
     testIt <- hold$`time-series`$`time-series`[[4]]
     
@@ -69,9 +67,19 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL,
       
     } else {
       
+      tStep <- hold$`time-series`$`time-series`$`regular-interval-values`$interval
+      
+      tStep <- stringr::str_remove(tStep, "PT")
+      
+      tStepNum <- readr::parse_number(tStep)
+      
+      tStepAlpha <- stringr::str_remove(tStep, as.character(tStepNum))
+      
+      tStepSeq <- ifelse(tStepAlpha == "H", "hour", "min")
+      
       newDat <- data.frame(index = seq(from = as.POSIXct(hold$`time-series`$`time-series`$`regular-interval-values`$segments[[1]]$`first-time`, "%Y-%m-%dT%H:%M:%S", tz = "UTC"), 
                                        to = as.POSIXct(hold$`time-series`$`time-series`$`regular-interval-values`$segments[[1]]$`last-time`, "%Y-%m-%dT%H:%M:%S", tz = "UTC"), 
-                                       by = "1 hours")) %>% 
+                                       by = paste(tStepNum, tStepSeq))) %>% 
         dplyr::mutate(value = hold$`time-series`$`time-series`$`regular-interval-values`$segments[[1]]$`values`[[1]][, 1])
       
     }
