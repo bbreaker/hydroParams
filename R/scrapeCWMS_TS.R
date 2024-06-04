@@ -1,6 +1,8 @@
 ## startDate and/or endDate should be a character object that resembles a POSIXct object... ie "2024-02-01 14:45:00"
 ## startDate must be specified, endDate can be left as NULL.
-## Leaving as only dealing with UTC for now. Might change this later.
+## Leaving as only dealing with UTC for now. Might change this later. 
+## The user needs to specify 'regular' or 'irregular' for the time series typ. It seems like daily is 'irregular' and sub-daily is 'regular'.
+## Right now, this function will really only work with daily and hourly... need to make it recognize 'regular' time-step intervals and create the datetime sequence appropriatly.
 
 scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, 
                           tStep = "irregular") {
