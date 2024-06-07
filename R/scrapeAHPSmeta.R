@@ -1,6 +1,4 @@
 scrapeAHPSmeta <- function(localName, altName = NULL, getSimpDF = FALSE) {
-
-  library(dplyr); library(jsonlite)
   
   url <- paste0("https://api.water.noaa.gov/nwps/v1/gauges/", localName) 
   
@@ -20,14 +18,16 @@ scrapeAHPSmeta <- function(localName, altName = NULL, getSimpDF = FALSE) {
       catNames <- names(hold$flood$categories)[i]
       
       retDF_ <- data.frame(dataType = names(hold$flood$categories)[i]) %>% 
-        dplyr::bind_cols(valStage = catVals$stage, valFlow = catVals$flow)
+        dplyr::bind_cols(valStage = as.character(catVals$stage), 
+                         valFlow = as.character(catVals$flow))
       
       retDF <- dplyr::bind_rows(retDF, retDF_)
         
     }
     
     retDF_ <- data.frame(dataType = c("conversionElevUnit", "conversionElev"), 
-                         valStage = c(hold$datums$vertical$value$abbrev, hold$datums$vertical$value$value))
+                         valStage = c(hold$datums$vertical$value$abbrev, 
+                                      as.character(hold$datums$vertical$value$value)))
     
     retDF <- dplyr::bind_rows(retDF, retDF_)
     
