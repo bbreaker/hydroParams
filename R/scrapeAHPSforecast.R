@@ -54,7 +54,7 @@ scrapeAHPSforecast <- function(localName, altName = NA) {
     forecastDat <- hold$forecast$data %>% 
       dplyr::mutate(dateTime = as.POSIXct(validTime, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>% 
       dplyr::select(dateTime, primary, secondary) %>% 
-      dplyr::mutate(localName = station, altName = altStation, groupName = "Observed") %>% 
+      dplyr::mutate(localName = station, altName = altStation, groupName = "Forecast") %>% 
       dplyr::select(localName, altName, groupName, dateTime, primary, secondary)
     
     forPrmrUnits <- hold$forecast$primaryUnits
