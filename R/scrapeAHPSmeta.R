@@ -26,7 +26,7 @@ scrapeAHPSmeta <- function(localName, altName = NULL, getSimpDF = FALSE) {
     }
     
     retDF_ <- data.frame(dataType = c("conversionElevUnit", "conversionElev"), 
-                         valStage = c(hold$datums$vertical$value$abbrev, 
+                         valStage = c(as.character(hold$datums$vertical$value$abbrev), 
                                       as.character(hold$datums$vertical$value$value)))
     
     retDF <- dplyr::bind_rows(retDF, retDF_)
