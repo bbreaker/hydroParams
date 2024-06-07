@@ -1,191 +1,96 @@
 scrapeAHPSforecast <- function(localName, altName = NA) {
   
-  library(rvest) 
-  library(dplyr) 
-  library(stringr) 
+  library(dplyr); library(jsonlite)
   
-  results <- data.frame(localName = as.character(), 
-                        altName = as.character(), 
-                        groupName = as.character(), 
-                        datetime = as.character(), 
-                        stage = as.character(), 
-                        flow = as.character(), 
-                        stringsAsFactors = FALSE)
+  retDF <- data.frame()
   
   for (i in 1:length(localName)) {
     
     N <- length(localName)
     station <- localName[i]
     altStation <- altName[i]
-    url <- paste0("https://water.weather.gov/ahps2/hydrograph_to_xml.php?gage=", station, "&output=tabular")
-    #print(paste0(round((i / N) * 100, 2), "%", " complete"))
+    
+    url <- paste0("https://api.water.noaa.gov/nwps/v1/gauges/", station, "/stageflow") 
     
     hold <- tryCatch(
-      url %>%
-        read_html() %>% 
-        html_nodes('table'),
+      fromJSON(url),
       error = function(e) {"failure"}
     )
     
-    if (any(hold == "failure")) {
+    observedDat <- hold$observed$data %>% 
+      dplyr::mutate(dateTime = as.POSIXct(validTime, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>% 
+      dplyr::select(dateTime, primary, secondary) %>% 
+      dplyr::mutate(localName = station, altName = altStation, groupName = "Observed") %>% 
+      dplyr::select(localName, altName, groupName, dateTime, primary, secondary)
+    
+    obsPrmrUnits <- hold$observed$primaryUnits
+    
+    obsScndrUnits <- hold$observed$secondaryUnits
+    
+    if (obsScndrUnits == "kcfs") {
       
-      finDF <- data.frame(localName = station, 
-                          altName = altStation, 
-                          groupName = "failed", 
-                          datetime = "failed", 
-                          value = "failed", 
-                          unit = "failed", 
-                          stringsAsFactors = FALSE)
+      observedDat <- observedDat %>% 
+        dplyr::mutate(secondary = secondary * 1000) %>% 
+        dplyr::rename(stage = primary, flow = secondary)
       
-      results <- dplyr::bind_rows(results, finDF)
+    } else if (obsPrmrUnits  == "kcfs") {
       
-    } else {
+      observedDat <- observedDat %>% 
+        dplyr::mutate(primary = primary * 1000) %>% 
+        dplyr::rename(stage = secondary, flow = primary)
       
-      holdTables <- hold %>%
-        html_nodes(xpath = paste0('/html/body/table[1]')) %>% 
-        html_table(fill = TRUE) %>% 
-        as.data.frame()
+    } else if (obsScndrUnits == "cfs") {
       
-      holdTables <- holdTables[-1, ]
+      observedDat <- observedDat %>% 
+        dplyr::rename(stage = primary, flow = secondary)
       
-      if (!any(grepl("Flow", holdTables))) {
-        
-        holdTables <- holdTables[, 1:2]
-        
-        fCastSplt <- "Forecast"
-        
-        holdFcast <- holdTables[(grep(pattern = fCastSplt, holdTables$X1)):(nrow(holdTables)), ]
-        
-        holdFcast1 <- holdFcast %>% 
-          dplyr::slice(-1, -2) %>% 
-          dplyr::mutate(date = stringr::str_sub(X1, 1, 5), 
-                        time = stringr::str_sub(X1, 7, 11), 
-                        datetime = paste0(date, "/", format(Sys.Date(), "%Y"), time)) %>% 
-          dplyr::mutate(localName = station, 
-                        altName = altStation, 
-                        groupName = "forecast", 
-                        datetime = as.POSIXct(datetime, format = "%m/%d/%Y %H:%M", tz = "GMT"))
-        
-        fCastStageN <- as.numeric(str_remove(holdFcast1$X2, "[aA-zZ]+"))
-        
-        fCastStageC <- as.character(str_extract(holdFcast1$X2, "[aA-zZ]+"))
-        
-        fCastAddDF <- data.frame(stage = fCastStageN, flow = NA)
-        
-        holdFcast2 <- holdFcast1 %>% 
-          dplyr::select(localName, altName, groupName, datetime) %>% 
-          bind_cols(fCastAddDF)
-        
-        holdObs <- holdTables[1:(grep(pattern = fCastSplt, holdTables$X1) - 1), ]
-        
-        holdObs1 <- holdObs %>% 
-          dplyr::slice(-1) %>% 
-          dplyr::slice(-1) %>% 
-          dplyr::mutate(date = stringr::str_sub(X1, 1, 5), 
-                        time = stringr::str_sub(X1, 7, 11), 
-                        datetime = paste0(date, "/", format(Sys.Date(), "%Y"), time)) %>% 
-          dplyr::mutate(localName = station, 
-                        altName = altStation, 
-                        groupName = "observed", 
-                        datetime = as.POSIXct(datetime, format = "%m/%d/%Y %H:%M", tz = "GMT"))
-        
-        obsStageN <- as.numeric(str_remove(holdObs1$X2, "[aA-zZ]+"))
-        
-        obsStageC <- as.character(str_extract(holdObs1$X2, "[aA-zZ]+"))
-        
-        obsAddDF <- data.frame(stage = obsStageN, flow = NA)
-        
-        holdObs2 <- holdObs1 %>% 
-          dplyr::select(localName, altName, groupName, datetime) %>% 
-          bind_cols(obsAddDF)
-        
-        finDF <- dplyr::bind_rows(holdObs2, holdFcast2)
-        
-        finDF <- arrange(finDF, datetime)
-        
-        results <- rbind(results, finDF)
-        
-      } else {
-        
-        holdTables <- holdTables[, 1:3]
-        
-        fCastSplt <- "Forecast"
-        
-        holdFcast <- holdTables[(grep(pattern = fCastSplt, holdTables$X1)):(nrow(holdTables)), ]
-        
-        holdFcast1 <- holdFcast %>% 
-          dplyr::slice(-1) %>% 
-          dplyr::slice(-1) %>% 
-          dplyr::mutate(date = stringr::str_sub(X1, 1, 5), 
-                        time = stringr::str_sub(X1, 7, 11), 
-                        datetime = paste0(date, "/", format(Sys.Date(), "%Y"), time)) %>% 
-          dplyr::mutate(localName = station, 
-                        altName = altStation, 
-                        groupName = "forecast", 
-                        datetime = as.POSIXct(datetime, format = "%m/%d/%Y %H:%M", tz = "GMT"))
-        
-        fCastStageN <- as.numeric(str_remove(holdFcast1$X2, "[aA-zZ]+"))
-        
-        fCastStageC <- as.character(str_extract(holdFcast1$X2, "[aA-zZ]+"))
-        
-        fCastFlowN <- as.numeric(str_remove(holdFcast1$X3, "[aA-zZ]+"))
-        
-        fCastFlowC <- as.character(str_extract(holdFcast1$X3, "[aA-zZ]+"))
-        
-        fCastAddDF <- data.frame(stage = fCastStageN, flow = fCastFlowN, flowC = fCastFlowC)
-        
-        fCastAddDF <- fCastAddDF %>% 
-          dplyr::mutate(flow = ifelse(flowC == "kcfs", flow * 1000, flow)) %>% 
-          dplyr::select(-flowC)
-        
-        holdFcast2 <- holdFcast1 %>% 
-          dplyr::select(localName, altName, groupName, datetime) %>% 
-          bind_cols(fCastAddDF)
-        
-        holdObs <- holdTables[1:(grep(pattern = fCastSplt, holdTables$X1) - 1), ]
-        
-        holdObs1 <- holdObs %>% 
-          dplyr::slice(-1) %>% 
-          dplyr::slice(-1) %>% 
-          dplyr::mutate(date = stringr::str_sub(X1, 1, 5), 
-                        time = stringr::str_sub(X1, 7, 11), 
-                        datetime = paste0(date, "/", format(Sys.Date(), "%Y"), time)) %>% 
-          dplyr::mutate(localName = station, 
-                        altName = altStation, 
-                        groupName = "observed", 
-                        datetime = as.POSIXct(datetime, format = "%m/%d/%Y %H:%M", tz = "GMT"))
-        
-        obsStageN <- as.numeric(str_remove(holdObs1$X2, "[aA-zZ]+"))
-        
-        obsStageC <- as.character(str_extract(holdObs1$X2, "[aA-zZ]+"))
-        
-        obsFlowN <- as.numeric(str_remove(holdObs1$X3, "[aA-zZ]+"))
-        
-        obsFlowC <- as.character(str_extract(holdObs1$X3, "[aA-zZ]+"))
-        
-        obsAddDF <- data.frame(stage = obsStageN, flow = obsFlowN, flowC = obsFlowC)
-        
-        obsAddDF <- obsAddDF %>% 
-          dplyr::mutate(flow = ifelse(flowC == "kcfs", flow * 1000, flow)) %>% 
-          dplyr::select(-flowC)
-        
-        holdObs2 <- holdObs1 %>% 
-          dplyr::select(localName, altName, groupName, datetime) %>% 
-          bind_cols(obsAddDF)
-        
-        finDF <- dplyr::bind_rows(holdObs2, holdFcast2)
-        
-        finDF <- arrange(finDF, datetime)
-        
-        results <- rbind(results, finDF)
-        
-      }
+    } else if (obsPrmrUnits == "cfs") {
+      
+      observedDat <- observedDat %>% 
+        dplyr::rename(stage = secondary, flow = primary)
       
     }
     
+    forecastDat <- hold$forecast$data %>% 
+      dplyr::mutate(dateTime = as.POSIXct(validTime, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>% 
+      dplyr::select(dateTime, primary, secondary) %>% 
+      dplyr::mutate(localName = station, altName = altStation, groupName = "Observed") %>% 
+      dplyr::select(localName, altName, groupName, dateTime, primary, secondary)
+    
+    forPrmrUnits <- hold$forecast$primaryUnits
+    
+    forScndrUnits <- hold$forecast$secondaryUnits
+    
+    if (forScndrUnits == "kcfs") {
+      
+      forecastDat <- forecastDat %>% 
+        dplyr::mutate(secondary = secondary * 1000) %>% 
+        dplyr::rename(stage = primary, flow = secondary)
+      
+    } else if (forPrmrUnits  == "kcfs") {
+      
+      forecastDat <- forecastDat %>% 
+        dplyr::mutate(primary = primary * 1000) %>% 
+        dplyr::rename(stage = secondary, flow = primary)
+      
+    } else if (forScndrUnits == "cfs") {
+      
+      forecastDat <- forecastDat %>% 
+        dplyr::rename(stage = primary, flow = secondary)
+      
+    } else if (forPrmrUnits == "cfs") {
+      
+      forecastDat <- forecastDat %>% 
+        dplyr::rename(stage = secondary, flow = primary)
+      
+    }
+    
+    retDF_ <- dplyr::bind_rows(observedDat, forecastDat)
+    
+    retDF <- dplyr::bind_rows(retDF, retDF_)
+    
   }
   
-  return(results)
+  return(retDF)
   
 }
-
