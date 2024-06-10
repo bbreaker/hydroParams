@@ -89,6 +89,12 @@ scrapeAHPSforecast <- function(localName, altName = NA) {
     
     retDF <- dplyr::bind_rows(retDF, retDF_)
     
+    if (N > 1) {
+      
+      Sys.sleep(30)
+      
+    }
+    
   }
   
   return(retDF)
