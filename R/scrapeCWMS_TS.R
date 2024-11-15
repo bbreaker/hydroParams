@@ -7,6 +7,8 @@
 scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, 
                           dataType = "irregular") {
   
+  time_series_id <- stringr::str_replace_all(time_series_id, "&", "%26")
+  
   if (is.null(endDate)) {
     
     newStart <- paste0(format(as.POSIXct(startDate), "%Y-%m-%d"), "T", 
