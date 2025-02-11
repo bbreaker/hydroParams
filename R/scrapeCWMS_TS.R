@@ -18,7 +18,8 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL,
     url <- paste0("https://cwms-data.usace.army.mil/cwms-data/timeseries?name=", 
                   time_series_id, 
                   "&office=", office, 
-                  "&begin=", newStart)
+                  "&begin=", newStart, 
+                  "&page-size=20000")
     
     url <- stringr::str_replace_all(url, " ", "%20")
     
@@ -42,7 +43,7 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL,
                   "&office=", office, 
                   "&begin=", newStart, 
                   "&end=", newEnd, 
-                  "&page-size=15000")
+                  "&page-size=20000")
     
     url <- stringr::str_replace_all(url, " ", "%20")
     
