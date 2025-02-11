@@ -38,3 +38,20 @@ area_sqmi <- 0.1  # Watershed area in square miles... this should be adjusted fo
 
 # run the function created above
 hydrograph <- clarkUH(rainfall, dt, Tc, R, area_sqmi)
+
+# aggregate results for plottin
+library(dplyr)
+df <- hydrograph %>% 
+  dplyr::mutate(Precip_in = rainfall) %>% 
+  tidyr::pivot_longer(cols = c(Precip_in, Runoff_CFS), names_to = "metric", 
+                      values_to = "value")
+# plot the rainfall and resulting runoff
+library(ggplot2)
+ggplot(df, aes(x = Time, y = value)) + 
+  geom_bar(stat = "identity", data = subset(df, metric == "Precip_in"), 
+           fill = NA, color = "grey10") + 
+  geom_line(aes(group = 1), data = subset(df, metric == "Runoff_CFS")) + 
+  theme_bw() + 
+  labs(x = "Time (hrs)", 
+       y = NULL) + 
+  facet_grid(rows = vars(metric), scales = "free_y")
