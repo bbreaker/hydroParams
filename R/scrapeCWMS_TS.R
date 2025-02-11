@@ -4,8 +4,7 @@
 ## The user needs to specify 'regular' or 'irregular' for the time series typ. It seems like daily is 'irregular' and sub-daily is 'regular'.
 ## Right now, this function will really only work with daily and hourly... need to make it recognize 'regular' time-step intervals and create the datetime sequence appropriatly.
 
-scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, 
-                          dataType = "irregular") {
+scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
   
   time_series_id <- stringr::str_replace_all(time_series_id, "&", "%26")
   
