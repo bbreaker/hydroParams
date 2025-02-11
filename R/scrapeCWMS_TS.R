@@ -41,7 +41,8 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL,
                   time_series_id, 
                   "&office=", office, 
                   "&begin=", newStart, 
-                  "&end=", newEnd)
+                  "&end=", newEnd, 
+                  "&page-size=15000")
     
     url <- stringr::str_replace_all(url, " ", "%20")
     
@@ -52,45 +53,10 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL,
     
   }
   
-  if (dataType == "irregular") {
-    
-    newDat <- data.frame(hold[[1]][[3]][[4]][[3]][[1]]) %>% 
-      dplyr::mutate(dateTime = as.POSIXct(X1, "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>% 
-      dplyr::rename(value = X2) %>% 
-      dplyr::select(dateTime, value)
-    
-  } else if (dataType == "regular") {
-    
-    testIt <- hold$`time-series`$`time-series`[[4]]
-    
-    if (any(testIt == "Not enough memory for CONNECT BY operation")) {
-      
-      newDat <- "try shorter period"
-      
-    } else {
-      
-      tStep <- hold$`time-series`$`time-series`$`regular-interval-values`$interval
-      
-      tStep <- stringr::str_remove(tStep, "PT")
-      
-      tStepNum <- readr::parse_number(tStep)
-      
-      tStepAlpha <- stringr::str_remove(tStep, as.character(tStepNum))
-      
-      tStepSeq <- ifelse(tStepAlpha == "H", "hour", "min")
-      
-      newDat <- data.frame(index = seq(from = as.POSIXct(hold$`time-series`$`time-series`$`regular-interval-values`$segments[[1]]$`first-time`, "%Y-%m-%dT%H:%M:%S", tz = "UTC"), 
-                                       to = as.POSIXct(hold$`time-series`$`time-series`$`regular-interval-values`$segments[[1]]$`last-time`, "%Y-%m-%dT%H:%M:%S", tz = "UTC"), 
-                                       by = paste(tStepNum, tStepSeq))) %>% 
-        dplyr::mutate(value = hold$`time-series`$`time-series`$`regular-interval-values`$segments[[1]]$`values`[[1]][, 1])
-      
-    }
-    
-  } else {
-    
-    newDat <- "Something went wrong..."
-    
-  }
+  newDat <- hold$values %>% 
+    data.frame() %>% 
+    dplyr::rename(index = 1, value = 2, flag = 3) %>% 
+    dplyr::mutate(index = as.POSIXct(index/1000, tz = "UTC"))
   
   return(newDat)
   
