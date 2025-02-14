@@ -23,7 +23,7 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
     url <- stringr::str_replace_all(url, " ", "%20")
     
     hold <- tryCatch(
-      fromJSON(url),
+      jsonlite::fromJSON(url),
       error = function(e) {"failure"}
     )
     
@@ -47,7 +47,7 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
     url <- stringr::str_replace_all(url, " ", "%20")
     
     hold <- tryCatch(
-      fromJSON(url),
+      jsonlite::fromJSON(url),
       error = function(e) {"failure"}
     )
     
