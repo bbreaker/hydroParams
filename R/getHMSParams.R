@@ -1,4 +1,4 @@
-getHMSParams <- function(basinFile, type) {
+getHMSParams <- function(basinFile, type, fixHeader = TRUE) {
   
   basinFile <- readLines(basinFile)
   
@@ -70,6 +70,14 @@ getHMSParams <- function(basinFile, type) {
     refDF <- dplyr::bind_rows(refDF, refDFWide)
     
   } 
+  
+  if (fixHeader == TRUE) {
+    
+    names(refDF) <- gsub("     ", "", names(refDF))
+    names(refDF) <- gsub(" ", "_", names(refDF))
+    names(refDF) <- gsub("/", "_", names(refDF))
+    
+  }
   
   return(refDF)
   
