@@ -29,6 +29,7 @@ readPeakFQOut <- function(outFile) {
   newTbl1_2 <- newText[-c(1:grep(pattern = topOut1_2, newText))]
   newTbl1_2 <- newTbl1_2[1:9]
   col2Name <- gsub("Option", "", newTbl1_2[1])
+  col2Name <- gsub(" ", "", col2Name)
   newTbl1_2[2] <- gsub("EMA Est. of G_atsite", "gamma_Est_EMA", newTbl1_2[2])
   newTbl1_2[3] <- gsub("B17B Est. of MSE[G_atsite]", "MSE_Est_B17B", newTbl1_2[3], fixed = TRUE)
   stringr::str_sub(newTbl1_2[4], start = 16, end = 43) <- "EMA_Adje_Est_MSE"
