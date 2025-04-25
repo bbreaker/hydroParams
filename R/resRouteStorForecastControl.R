@@ -27,6 +27,9 @@
 ## 'discharge_update_interval'
 ##  - single numeric value in hours representing time in between discharge changes in discharges
 ##  - intended to mimic rate at which gate changes can be made
+## 'discharge_update_interval_override_elevation'
+##  - single numeric value in feet that specifies an elevation at which the 'discharge_update_interval'
+##    goes back to the time step of the inflows 
 
 resRouteStorForecastControl <- function(inflow_cfs_series, 
                                         geometry_curve, 
@@ -38,7 +41,8 @@ resRouteStorForecastControl <- function(inflow_cfs_series,
                                         max_ramp_rate_cfs = 30000, 
                                         fixed_discharge_ts = NULL, 
                                         ramp_rate_override_elevation = Inf, 
-                                        discharge_update_interval = 1) {
+                                        discharge_update_interval = 1, 
+                                        discharge_update_interval_override_elevation = NULL) {
   timestep_sec <- 3600
   ft3_to_af <- 1 / 43560
   n <- length(inflow_cfs_series)
@@ -61,7 +65,10 @@ resRouteStorForecastControl <- function(inflow_cfs_series,
   }
   
   for (t in 2:n) {
-    update_allowed <- ((t - 1) %% discharge_update_interval == 0)
+    override_update <- !is.null(discharge_update_interval_override_elevation) &&
+      elevation_ft[t - 1] >= discharge_update_interval_override_elevation
+    
+    update_allowed <- ((t - 1) %% discharge_update_interval == 0) || override_update
     
     if (!is.null(fixed_discharge_ts) && t <= length(fixed_discharge_ts)) {
       discharge_cfs[t] <- fixed_discharge_ts[t]
