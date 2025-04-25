@@ -13,14 +13,14 @@
 ##    the 'max_ramp_rate_cfs' applies to changes in releases
 ## 'max_ramp_rate' - 
 ##  - single numeric value in cfs that represents the maximum change in discharge that can 
-##    occur per hour unless the 'max_discharge_cfs' is exceeded
+##    occur per hour unless the 'ramp_rate_override_elevation' is exceeded
 ## 'fixed_discharge_ts' 
 ##  - numeric vector of hourly discharge values that can be shorter than the
 ##    length of the 'inflow_series_cfs' vector
 ##  - if the vector is the same length as 'inflow_time_series', the 'fixed_discharge_ts' 
 ##    will be used for releases for the entire simulation
 ##  - if the vector is shorter than 'inflow_time_series', the specified discharge values
-##    are used until they and and the rules take over
+##    are used until they end and then the rules take over
 ## 'ramp_rate_override_elevation' 
 ##  - single numeric value in feet that specifies an elevation above which the 'max_ramp_rate_cfs' 
 ##    is disregarded and the geometry curve is used to compute discharges, elevations, and etc 
