@@ -1,30 +1,31 @@
 ## 'inflow_cfs_series' 
-##  - is a numeric vector of hourly inflows in cfs
+##  - numeric vector of hourly inflows in cfs
 ## 'geometry_curve'
-##  - is a data frame that contains 3 columns... 'elevation', 'storage', and 'discharge'
+##  - data frame that contains 3 columns... 'elevation', 'storage', and 'discharge'
 ## 'initial_storage_af' 
-##  - is the starting storage value in acre-feet
+##  - single numeric value in acre-feet that represents the storage value at the 
+##    beginning of the simulation
 ## 'forecast_hours' 
-##  - is the look-ahead time used to determine if the inflows will create elevations
-##    greater than 'elevation_max'
+##  - single numeric value in hours that represents the look-ahead time used to 
+##    determine if the inflows will create elevations greater than 'elevation_max'
 ## 'elevation_max'   
-##  - is the elevation threshold below from wich the 'max_ramp_rate_cfs' applies to
-##    changes in releases
+##  - single numeric value in feet that represents the elevation threshold below from which 
+##    the 'max_ramp_rate_cfs' applies to changes in releases
 ## 'max_ramp_rate' - 
-##  - is the maximum change in discharge that can occur per hour unless the 'max_discharge_cfs' 
-##    is exceeded
+##  - single numeric value in cfs that represents the maximum change in discharge that can 
+##    occur per hour unless the 'max_discharge_cfs' is exceeded
 ## 'fixed_discharge_ts' 
-##  - is a numeric vector of hourly discharge values that can be shorter than the
+##  - numeric vector of hourly discharge values that can be shorter than the
 ##    length of the 'inflow_series_cfs' vector
 ##  - if the vector is the same length as 'inflow_time_series', the 'fixed_discharge_ts' 
 ##    will be used for releases for the entire simulation
 ##  - if the vector is shorter than 'inflow_time_series', the specified discharge values
 ##    are used until they and and the rules take over
 ## 'ramp_rate_override_elevation' 
-##  - specifies an elevation above which the 'max_ramp_rate_cfs' is disregarded and the 
-##    geometry curve is used to compute dischages, elevations, and etc 
+##  - single numeric value in feet that specifies an elevation above which the 'max_ramp_rate_cfs' 
+##    is disregarded and the geometry curve is used to compute discharges, elevations, and etc 
 ## 'discharge_update_interval'
-##  - single value in hours representing time in between discharge changes in discharges
+##  - single numeric value in hours representing time in between discharge changes in discharges
 ##  - intended to mimic rate at which gate changes can be made
 
 resRouteStorForecastControl <- function(inflow_cfs_series, 
