@@ -11,6 +11,10 @@
 ## 'elevation_max'   
 ##  - single numeric value in feet that represents the elevation threshold below from which 
 ##    the 'max_ramp_rate_cfs' applies to changes in releases
+## 'elevation_target'
+##  - single numeric value in feet that the simulation tries to stay below within the rules 
+##    that are applied when forecast elevations are below 'elevation_max' and other 
+##    thresholds related to 'max_ramp_rate', 'discharge_update_interval', and etc
 ## 'max_ramp_rate' - 
 ##  - single numeric value in cfs that represents the maximum change in discharge that can 
 ##    occur per hour unless the 'ramp_rate_override_elevation' is exceeded
@@ -29,7 +33,7 @@
 ##  - intended to mimic rate at which gate changes can be made
 ## 'discharge_update_interval_override_elevation'
 ##  - single numeric value in feet that specifies an elevation at which the 'discharge_update_interval'
-##    goes back to the time step of the inflows 
+##    goes back to the time step of the inflows  
 
 resRouteStorForecastControl <- function(inflow_cfs_series, 
                                         geometry_curve, 
