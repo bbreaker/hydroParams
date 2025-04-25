@@ -23,6 +23,9 @@
 ## 'ramp_rate_override_elevation' 
 ##  - specifies an elevation above which the 'max_ramp_rate_cfs' is disregarded and the 
 ##    geometry curve is used to compute dischages, elevations, and etc 
+## 'discharge_update_interval'
+##  - single value in hours representing time in between discharge changes in discharges
+##  - intended to mimic rate at which gate changes can be made
 
 resRouteStorForecastControl <- function(inflow_cfs_series, 
                                         geometry_curve, 
@@ -33,7 +36,8 @@ resRouteStorForecastControl <- function(inflow_cfs_series,
                                         max_discharge_cfs = 43000, 
                                         max_ramp_rate_cfs = 30000, 
                                         fixed_discharge_ts = NULL, 
-                                        ramp_rate_override_elevation = Inf) {
+                                        ramp_rate_override_elevation = Inf, 
+                                        discharge_update_interval = 1) {
   timestep_sec <- 3600
   ft3_to_af <- 1 / 43560
   n <- length(inflow_cfs_series)
@@ -56,14 +60,16 @@ resRouteStorForecastControl <- function(inflow_cfs_series,
   }
   
   for (t in 2:n) {
-    # Use fixed discharge if provided
+    update_allowed <- ((t - 1) %% discharge_update_interval == 0)
+    
     if (!is.null(fixed_discharge_ts) && t <= length(fixed_discharge_ts)) {
       discharge_cfs[t] <- fixed_discharge_ts[t]
+    } else if (!update_allowed) {
+      discharge_cfs[t] <- discharge_cfs[t - 1]
     } else {
       forecast_end <- min(t + forecast_hours - 1, n)
       inflow_forecast <- inflow_cfs_series[t:forecast_end]
       
-      # Forecast test: will elevation exceed max?
       storage_test <- storage_af[t - 1]
       exceed_max <- FALSE
       for (h in 1:length(inflow_forecast)) {
@@ -115,7 +121,6 @@ resRouteStorForecastControl <- function(inflow_cfs_series,
         }
       }
       
-      # Check if ramp rate should be applied
       if (previous_elevation > ramp_rate_override_elevation) {
         discharge_cfs[t] <- proposed_discharge
       } else {
