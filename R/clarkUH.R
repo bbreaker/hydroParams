@@ -1,4 +1,4 @@
-# create a function to transform rainfall in to runoff using Clark Unit Hydrographs
+# Transform rainfall in to runoff using Clark Unit Hydrographs
 # Requires hourly rainfall time-series
 clarkUH <- function(rainfall, dt, Tc, R, area_sqmi) {
   # Constants
