@@ -1,72 +1,36 @@
-# Compute LP3 parameter uncertainty (Sigma) from data via bootstrap
-# - x: positive flows
-# - method: "nonparametric" (resample observed data) or "parametric" (simulate from fitted LP3)
-# - B: number of bootstrap replicates
-# - Returns: list(meanlog, sdlog, skew, Sigma, draws), where draws is a Bx3 matrix of bootstrap params
-lp3ParamUncertainty <- function(x, log_base = 10, method = c("nonparametric", "parametric"), 
-                                B = 5000, seed = NULL) {
-  method <- match.arg(method)
-  if (any(!is.finite(x)) || any(x <= 0)) stop("All flows x must be positive and finite.")
-  if (!is.null(seed)) set.seed(seed)
+# Approximate parameter uncertainty from LP3 parameters + effective record length
+# Based on Bulletin 17B/17C approximations
+# Inputs: meanlog, sdlog, skew (of log10 flows), Neff = effective record length
+# Output: list with Sigma covariance matrix
+lp3ParamUncertainty <- function(meanlog, sdlog, skew, Neff) {
+  if (Neff <= 1) stop("Effective record length must be > 1.")
+  if (sdlog <= 0) stop("sdlog must be > 0.")
   
-  # log10 (or other base) transform
-  y <- log(x, base = log_base)
-  n <- length(y)
+  # Variance of mean (classic)
+  var_mean <- sdlog^2 / Neff
   
-  # helpers
-  skewness <- function(v) {
-    m <- mean(v); s <- sd(v)
-    if (s == 0) return(0)
-    mean((v - m)^3) / (s^3)
-  }
+  # Variance of sd (approx)
+  var_sd <- (sdlog^2 / (2 * Neff))  # delta-method on variance ~ chi-square
   
-  # point estimates from sample logs
-  mu_hat <- mean(y)
-  sd_hat <- sd(y)
-  G_hat  <- skewness(y)
+  # Variance of skew (Bulletin 17B formula)
+  var_skew <- 6 / Neff
   
-  # generator for LP3 in log-space (returns a vector on log scale)
-  rlp3_log <- function(n, mu, sigma, G) {
-    if (abs(G) < 1e-8) {
-      # approx log-normal when skew ~ 0
-      z <- rnorm(n)
-    } else {
-      alpha <- (2 / abs(G))^2
-      if (G > 0) {
-        w <- rgamma(n, shape = alpha, scale = 1)
-        z <- (w - alpha) / sqrt(alpha)
-      } else {
-        w <- rgamma(n, shape = alpha, scale = 1)
-        z <- - (w - alpha) / sqrt(alpha)
-      }
-    }
-    mu + sigma * z
-  }
+  # Approx covariances (often assumed 0 in Bulletin 17 practice)
+  cov_ms <- 0
+  cov_mg <- 0
+  cov_sg <- 0
   
-  # collect bootstrap parameter draws
-  draws <- matrix(NA_real_, nrow = B, ncol = 3)
-  colnames(draws) <- c("meanlog", "sdlog", "skew")
-  
-  if (method == "nonparametric") {
-    for (b in seq_len(B)) {
-      yb <- sample(y, size = n, replace = TRUE)
-      draws[b, ] <- c(mean(yb), sd(yb), skewness(yb))
-    }
-  } else { # parametric
-    for (b in seq_len(B)) {
-      yb <- rlp3_log(n, mu = mu_hat, sigma = sd_hat, G = G_hat)
-      draws[b, ] <- c(mean(yb), sd(yb), skewness(yb))
-    }
-  }
-  
-  # covariance matrix of (meanlog, sdlog, skew)
-  Sigma <- stats::cov(draws)
+  Sigma <- matrix(c(var_mean, cov_ms,  cov_mg,
+                    cov_ms,  var_sd,  cov_sg,
+                    cov_mg,  cov_sg,  var_skew),
+                  nrow = 3, byrow = TRUE)
+  colnames(Sigma) <- rownames(Sigma) <- c("meanlog","sdlog","skew")
   
   list(
-    meanlog = mu_hat,
-    sdlog   = sd_hat,
-    skew    = G_hat,
-    Sigma   = Sigma,
-    draws   = draws
+    meanlog = meanlog,
+    sdlog   = sdlog,
+    skew    = skew,
+    Neff    = Neff,
+    Sigma   = Sigma
   )
 }
