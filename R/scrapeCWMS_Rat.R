@@ -85,10 +85,6 @@ scrapeCWMS_Rat <- function(rating_id, office, startDate = NULL, endDate = NULL) 
                   dep = as.numeric(dep)) %>% 
     dplyr::arrange(ind)
   
-  return(newDat)
+  return(retRat)
   
 }
-
-test <- scrapeCWMS_Rat(rating_id = "Clearwater_Dam-Headwater.Elev;Area-Reservoir.Standard.Production", 
-                       office = "SWL")
-
