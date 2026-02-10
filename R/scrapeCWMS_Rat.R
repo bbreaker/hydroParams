@@ -66,25 +66,34 @@ scrapeCWMS_Rat <- function(rating_id, office, startDate = NULL, endDate = NULL) 
   
   newDat <- data.frame(hold[[4]]$`rating-points`)
   
-  for (i in 1:nrow(newDat)) {
+  if (any(purrr::map_lgl(newDat, is.list) == TRUE)) {
     
-    if (i == 1) {
+    for (i in 1:nrow(newDat)) {
       
-      retRat <- newDat[[1]][[i]]
-    } else {
-      
-      retRat <- dplyr::bind_rows(retRat, newDat[[1]][[i]])
+      if (i == 1) {
+        
+        retRat <- newDat[[1]][[i]]
+      } else {
+        
+        retRat <- dplyr::bind_rows(retRat, newDat[[1]][[i]])
+      }
     }
-  }
     
-  retRat <- retRat %>% 
-    dplyr::mutate(isDup = duplicated(ind)) %>% 
-    dplyr::filter(isDup != TRUE) %>% 
-    dplyr::select(-isDup) %>% 
-    dplyr::mutate(ind = as.numeric(ind), 
-                  dep = as.numeric(dep)) %>% 
-    dplyr::arrange(ind)
+    retRat <- retRat %>% 
+      dplyr::mutate(isDup = duplicated(ind)) %>% 
+      dplyr::filter(isDup != TRUE) %>% 
+      dplyr::select(-isDup) %>% 
+      dplyr::mutate(ind = as.numeric(ind), 
+                    dep = as.numeric(dep)) %>% 
+      dplyr::arrange(ind)
+  } else {
+    
+    retRat <- newDat %>% 
+      dplyr::mutate(ind = as.numeric(point.ind), 
+                    dep = as.numeric(point.dep)) %>% 
+      dplyr::select(ind, dep) %>% 
+      dplyr::arrange(ind)
+  }
   
   return(retRat)
-  
 }
