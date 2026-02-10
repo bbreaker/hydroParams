@@ -1,6 +1,3 @@
-cwmsRefRat <- read_csv("L:\\ENG Shared\\HH\\data\\scrapeCWMSDat\\cwmsRefSWL_Rat.csv") %>% 
-  data.frame()
-
 ## startDate and/or endDate should be a character object that resembles a POSIXct object... ie "2024-02-01 14:45:00"
 ## startDate and endDate can be left as NULL.
 
@@ -94,3 +91,4 @@ scrapeCWMS_Rat <- function(rating_id, office, startDate = NULL, endDate = NULL) 
 
 test <- scrapeCWMS_Rat(rating_id = "Clearwater_Dam-Headwater.Elev;Area-Reservoir.Standard.Production", 
                        office = "SWL")
+
