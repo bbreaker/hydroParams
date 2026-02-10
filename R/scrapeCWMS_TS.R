@@ -1,10 +1,8 @@
 ## startDate and/or endDate should be a character object that resembles a POSIXct object... ie "2024-02-01 14:45:00"
 ## startDate must be specified, endDate can be left as NULL.
 ## Leaving as only dealing with UTC for now. Might change this later. 
-## The user needs to specify 'regular' or 'irregular' for the time series typ. It seems like daily is 'irregular' and sub-daily is 'regular'.
-## Right now, this function will really only work with daily and hourly... need to make it recognize 'regular' time-step intervals and create the datetime sequence appropriatly.
 
-scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
+scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, pageSize = 20000) {
   
   time_series_id <- stringr::str_replace_all(time_series_id, "&", "%26")
   
@@ -18,7 +16,7 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
                   time_series_id, 
                   "&office=", office, 
                   "&begin=", newStart, 
-                  "&page-size=20000")
+                  "&page-size=", pageSize)
     
     url <- stringr::str_replace_all(url, " ", "%20")
     
@@ -42,7 +40,7 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL) {
                   "&office=", office, 
                   "&begin=", newStart, 
                   "&end=", newEnd, 
-                  "&page-size=20000")
+                  "&page-size=", pageSize)
     
     url <- stringr::str_replace_all(url, " ", "%20")
     
