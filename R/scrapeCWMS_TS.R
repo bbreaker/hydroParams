@@ -27,7 +27,7 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, pag
     
     json_text <- rawToChar(req$content)
     
-    hold <- fromJSON(json_text)
+    hold <- rjson::fromJSON(json_text)
     
     #hold <- tryCatch(
     #  jsonlite::fromJSON(url), 
@@ -61,7 +61,7 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, pag
     
     json_text <- rawToChar(req$content)
     
-    hold <- fromJSON(json_text)
+    hold <- rjson::fromJSON(json_text)
     
     #hold <- tryCatch(
     #  jsonlite::fromJSON(url),
@@ -76,3 +76,4 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, pag
   
   return(newDat)
 }
+
