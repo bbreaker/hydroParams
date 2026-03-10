@@ -69,11 +69,12 @@ scrapeCWMS_TS <- function(time_series_id, office, startDate, endDate = NULL, pag
     #)
   }
   
-  newDat <- purrr::map(hold$values, ~ as.data.frame(t(.x))) %>% 
+  newDat <- purrr::map(hold$values, ~ stringr::str_replace_all(.x, "NULL", "-9999")) %>% 
+    purrr::map(., ~ as.data.frame(t(.x))) %>% 
     dplyr::bind_rows() %>% 
     dplyr::rename(index = 1, value = 2, flag = 3) %>% 
+    dplyr::mutate(across(index:flag, as.numeric)) %>% 
     dplyr::mutate(index = as.POSIXct(index/1000, tz = hold$`time-zone`))
   
   return(newDat)
 }
-
